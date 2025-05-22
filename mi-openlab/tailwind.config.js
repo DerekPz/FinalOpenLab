@@ -8,11 +8,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#3B82F6",
-        dark: "#0F172A",
-        light: "#F9FAFB",
-        muted: "#64748B",
-        accent: "#E0F2FE",
+    primary: '#2563eb',
+    light: '#F9FAFB',
+    darkText: '#1f2937', // gris-800 de Tailwind
+    darkBackground: '#111827', // gris-900 // 👈 nuevo nombre para evitar conflicto
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
