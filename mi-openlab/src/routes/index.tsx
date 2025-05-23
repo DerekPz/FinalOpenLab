@@ -3,7 +3,8 @@ import DefaultLayout from '../layout/DefaultLayout';
 import Explore from '../pages/Explore';
 import { useAuth } from '../context/AuthContext';
 import LoginRegister from '../pages/LoginRegister';
-import Portal from '../pages/Portal';
+import Portal from '../pages/portal/index';
+
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -25,6 +26,7 @@ export default function AppRoutes() {
             <Portal />
           </PrivateRoute>
         } />
+        
       </Routes>
     </BrowserRouter>
   );
