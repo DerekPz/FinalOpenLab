@@ -5,6 +5,8 @@ import { db } from '../services/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { uploadImage } from '../services/upload';
+import '../styles/scrollbar.css';
+
 
 Modal.setAppElement('#root');
 
@@ -76,12 +78,12 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
       isOpen={isOpen}
       onRequestClose={onClose}
       contentLabel="Crear Proyecto"
-      className="max-w-2xl mx-auto mt-20 bg-white dark:bg-zinc-900 p-8 rounded-lg shadow-xl outline-none"
-      overlayClassName="fixed inset-0 bg-black bg-opacity-40 z-50 flex justify-center items-start"
+      className="w-full max-w-2xl mx-4 sm:mx-auto mt-5 sm:mt-10 bg-white dark:bg-zinc-900 p-6 sm:p-8 rounded-lg shadow-xl outline-none max-h-[90vh] "
+      overlayClassName="fixed inset-0 z-50 flex justify-center items-start bg-gradient-to-br from-black/70 via-zinc-900/60 to-black/70 backdrop-blur-sm px-2"
     >
       <h2 className="text-2xl font-bold mb-6 text-darkText dark:text-white">Crear nuevo proyecto</h2>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 ">
         <div>
           <input
             {...register('title', { required: 'El título es obligatorio' })}
@@ -123,13 +125,13 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
 
         <div>
           <label className="block text-sm text-darkText dark:text-white mb-1">Imagen destacada:</label>
-          <div className="mt-2 flex justify-center rounded-lg border border-dashed border-zinc-500 px-6 py-10">
+          <div className="mt-2 flex justify-center rounded-lg border border-dashed border-zinc-600 px-6 py-10">
             <div className="text-center">
               <svg className="mx-auto size-12 text-zinc-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" />
               </svg>
               <div className="mt-4 flex text-sm text-zinc-500">
-                <label className="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 hover:text-indigo-500">
+                <label className="relative cursor-pointer rounded-md  font-semibold text-indigo-600 hover:text-indigo-500">
                   <span>Subir un archivo</span>
                   <input type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
                 </label>
