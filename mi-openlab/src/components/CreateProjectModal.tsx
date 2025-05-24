@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { uploadImage } from '../services/upload';
 
 Modal.setAppElement('#root');
 
@@ -25,27 +26,48 @@ interface ProjectFormData {
 export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ProjectFormData>();
 
   const onSubmit = async (data: ProjectFormData) => {
     if (!user) return;
     setLoading(true);
     try {
+      let uploadedImageUrl = '';
+      if (imageFile) {
+        uploadedImageUrl = await uploadImage(imageFile, user.uid);
+      }
+
       await addDoc(collection(db, 'projects'), {
         ...data,
+        imageUrl: uploadedImageUrl,
         tags: data.tags.split(',').map(tag => tag.trim()),
         createdAt: Timestamp.now(),
         userId: user.uid,
         deleted: false,
-        imageUrl: '', // se puede actualizar luego
       });
       reset();
+      setPreviewUrl('');
+      setImageFile(null);
       onClose();
       onProjectCreated();
     } catch (err) {
       console.error('Error al crear el proyecto:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -97,6 +119,28 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
             className="w-full px-4 py-2 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder:text-sm text-darkText dark:text-white"
             placeholder="Enlace demo (opcional)"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm text-darkText dark:text-white mb-1">Imagen destacada:</label>
+          <div className="mt-2 flex justify-center rounded-lg border border-dashed border-zinc-500 px-6 py-10">
+            <div className="text-center">
+              <svg className="mx-auto size-12 text-zinc-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" />
+              </svg>
+              <div className="mt-4 flex text-sm text-zinc-500">
+                <label className="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 hover:text-indigo-500">
+                  <span>Subir un archivo</span>
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+                </label>
+                <p className="pl-1">o arrastrar y soltar</p>
+              </div>
+              <p className="text-xs text-zinc-400">PNG, JPG, GIF hasta 10 MB</p>
+              {previewUrl && (
+                <img src={previewUrl} alt="Vista previa" className="mt-4 max-h-48 mx-auto rounded-lg border border-zinc-300 dark:border-zinc-600" />
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">

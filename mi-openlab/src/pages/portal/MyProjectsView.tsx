@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, PlusCircle } from 'lucide-react';
 import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -7,28 +7,23 @@ import Swal from 'sweetalert2';
 import CreateProjectModal from '../../components/CreateProjectModal';
 import type { Project } from '../../data/types';
 
-
-
-
 export default function MyProjectsView() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [showModal, setShowModal] = useState(false);
 
-  // Función reutilizable para obtener proyectos
-const fetchProjects = async () => {
-  if (!user) return;
-  const q = query(
-    collection(db, 'projects'),
-    where('userId', '==', user.uid)
-  );
-  const snapshot = await getDocs(q);
-  const results = snapshot.docs
-    .map(doc => ({ id: doc.id, ...doc.data() } as Project))
-    .filter(project => !project.deleted); // <- ahora sí compila
-  setProjects(results);
-};
-
+  const fetchProjects = async () => {
+    if (!user) return;
+    const q = query(
+      collection(db, 'projects'),
+      where('userId', '==', user.uid)
+    );
+    const snapshot = await getDocs(q);
+    const results = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as Project))
+      .filter(project => !project.deleted);
+    setProjects(results);
+  };
 
   useEffect(() => {
     if (user) fetchProjects();
@@ -53,7 +48,6 @@ const fetchProjects = async () => {
     }
   };
 
-  // 👤 Si no hay usuario autenticado, no renderiza nada (ni error)
   if (!user) return null;
 
   return (
@@ -81,24 +75,47 @@ const fetchProjects = async () => {
           <p className="text-xl font-medium">Aún no tienes proyectos creados.</p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {projects.map(project => (
-            <div key={project.id} className="bg-zinc-900 p-5 rounded-xl shadow hover:shadow-lg transition">
-              <h3 className="text-lg font-semibold mb-1">{project.title}</h3>
-              <p className="text-sm text-zinc-400 mb-2">{project.description}</p>
-              <span className="text-xs bg-zinc-800 text-white px-2 py-1 rounded">
-                {project.visibility === 'private' ? 'Privado' : 'Público'}
-              </span>
-              <div className="flex gap-2 mt-4">
-                <button className="text-sm text-yellow-400 hover:underline flex items-center gap-1">
-                  <Edit size={16} /> Editar
-                </button>
-                <button
-                  onClick={() => handleDelete(project.id)}
-                  className="text-sm text-red-400 hover:underline flex items-center gap-1"
-                >
-                  <Trash2 size={16} /> Eliminar
-                </button>
+            <div
+              key={project.id}
+              className="flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 overflow-hidden h-full"
+            >
+              <img
+                className="object-cover h-48 w-full"
+                src={project.imageUrl || 'https://via.placeholder.com/300'}
+                alt={project.title}
+              />
+              <div className="flex flex-col justify-between p-4 leading-normal">
+                <div className="flex justify-between items-center">
+                  <h5 className="text-lg font-bold text-gray-900 dark:text-white">
+                    {project.title}
+                  </h5>
+                  <span className={`text-xs px-2 py-1 rounded ${project.visibility === 'private' ? 'bg-red-500' : 'bg-green-600'} text-white`}>
+                    {project.visibility === 'private' ? 'Privado' : 'Público'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 my-2">
+                  {project.description}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {project.tags?.map(tag => (
+                    <span key={tag} className="bg-indigo-200 text-indigo-800 text-xs font-medium px-2 py-1 rounded">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-4">
+                  <button className="text-sm text-yellow-400 hover:underline flex items-center gap-1">
+                    <Edit size={16} /> Editar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(project.id)}
+                    className="text-sm text-red-400 hover:underline flex items-center gap-1"
+                  >
+                    <Trash2 size={16} /> Eliminar
+                  </button>
+                </div>
               </div>
             </div>
           ))}

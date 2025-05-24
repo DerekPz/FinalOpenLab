@@ -8,7 +8,7 @@ import { useDarkMode } from '../hooks/useDarkMode'; // tu hook personalizado
 export default function Navbar() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isDark, toggleDark } = useDarkMode(); // ✅ se corrige aquí
+  const { isDark, toggleDark } = useDarkMode();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -16,7 +16,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="w-full px-6 lg:px-12 py-4 flex items-center justify-between bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-800 transition-colors duration-200">
+    <nav className="fixed top-0 left-0 w-full h-16 z-50 px-6 lg:px-12 py-4 flex items-center justify-between bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-800 transition-colors duration-200 sm:pl-16">
       {/* Logo / nombre */}
       <Link
         to="/"
@@ -29,23 +29,22 @@ export default function Navbar() {
       <div className="flex items-center gap-4">
         {user ? (
           <>
-  <span className="text-sm text-zinc-600 dark:text-zinc-300 hidden sm:inline">
-     {user.displayName || user.email}
-  </span>
-  <Link
-    to="/portal"
-    className="text-sm text-primary font-medium hover:underline"
-  >
-    Mi portal
-  </Link>
-  <button
-    onClick={handleLogout}
-    className="text-sm text-red-500 hover:underline"
-  >
-    Cerrar sesión
-  </button>
-</>
-
+            <span className="text-sm text-zinc-600 dark:text-zinc-300 hidden sm:inline">
+              {user.displayName || user.email}
+            </span>
+            <Link
+              to="/portal"
+              className="text-sm text-primary font-medium hover:underline"
+            >
+              Mi portal
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-red-500 hover:underline"
+            >
+              Cerrar sesión
+            </button>
+          </>
         ) : (
           <>
             <Link
