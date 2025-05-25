@@ -1,3 +1,5 @@
+// src/views/MyProjectsView.tsx
+
 import { useEffect, useState } from 'react';
 import { Edit, Trash2, PlusCircle } from 'lucide-react';
 import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
@@ -6,11 +8,19 @@ import { useAuth } from '../../context/AuthContext';
 import Swal from 'sweetalert2';
 import CreateProjectModal from '../../components/CreateProjectModal';
 import type { Project } from '../../data/types';
+import UpdateProjectModal from '../../components/UpdateProjectModal';
+
 
 export default function MyProjectsView() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [showModal, setShowModal] = useState(false);
+  // Estado para el modal de creación
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  // Estado para el modal de actualización
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  // Estado para el proyecto que se va a editar
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+
 
   const fetchProjects = async () => {
     if (!user) return;
@@ -48,6 +58,26 @@ export default function MyProjectsView() {
     }
   };
 
+  // Función para abrir el modal de edición
+  const handleEditClick = (project: Project) => {
+    setProjectToEdit(project); // Establece el proyecto a editar
+    setShowUpdateModal(true);   // Abre el modal de edición
+  };
+
+  // Función para cerrar el modal de edición
+  const handleCloseUpdateModal = () => {
+    setShowUpdateModal(false);
+    setProjectToEdit(null); // Limpia el proyecto a editar al cerrar el modal
+    fetchProjects(); // Vuelve a cargar los proyectos después de una actualización
+  };
+
+  // Función para cerrar el modal de creación
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+    fetchProjects(); // Vuelve a cargar los proyectos después de una creación
+  };
+
+
   if (!user) return null;
 
   return (
@@ -55,7 +85,7 @@ export default function MyProjectsView() {
       <div className="flex justify-between items-center border-b border-zinc-700 pb-4">
         <h2 className="text-3xl font-bold text-darkText dark:text-white">Mis proyectos</h2>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => setShowCreateModal(true)} // Ahora usa showCreateModal
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
         >
           <PlusCircle size={18} />
@@ -63,9 +93,10 @@ export default function MyProjectsView() {
         </button>
       </div>
 
+      {/* Modal de CREACIÓN */}
       <CreateProjectModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        isOpen={showCreateModal} // Controlado por showCreateModal
+        onClose={handleCloseCreateModal} // Usa la función de cierre específica
         onProjectCreated={fetchProjects}
       />
 
@@ -106,7 +137,9 @@ export default function MyProjectsView() {
                   ))}
                 </div>
                 <div className="flex gap-4">
-                  <button className="text-sm text-yellow-400 hover:underline flex items-center gap-1">
+                  <button
+                    onClick={() => handleEditClick(project)} // Llama a la función que abre el modal de edición con el proyecto
+                    className="text-sm text-yellow-400 hover:underline flex items-center gap-1">
                     <Edit size={16} /> Editar
                   </button>
                   <button
@@ -120,6 +153,16 @@ export default function MyProjectsView() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Modal de ACTUALIZACIÓN (fuera del map, para que solo haya uno) */}
+      {projectToEdit && ( // Solo renderiza el modal de actualización si hay un proyecto para editar
+        <UpdateProjectModal
+          isOpen={showUpdateModal} // Controlado por showUpdateModal
+          onClose={handleCloseUpdateModal} // Usa la función de cierre específica
+          onProjectUpdated={fetchProjects}
+          project={projectToEdit} // Pasa el proyecto seleccionado para editar
+        />
       )}
     </div>
   );

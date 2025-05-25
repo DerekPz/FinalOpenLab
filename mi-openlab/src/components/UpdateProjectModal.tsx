@@ -1,68 +1,55 @@
-// src/components/CreateProjectModal.tsx
+// src/components/UpdateProjectModal.tsx
 
-import React, { useState } from 'react'; // Asegúrate de importar React si lo necesitas
+import React, { useState, useEffect } from 'react'; // Asegúrate de importar React
 import { useForm } from 'react-hook-form';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
-import { uploadImage } from '../services/upload';
+import type { Project } from '../data/types'; // Asegúrate de que la ruta sea correcta
 import { db } from '../services/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { uploadImage } from '../services/upload';
 
 import BaseModal from './BaseModal'; // Importa el BaseModal
-
-// Ya no necesitas importar Modal ni '../styles/scrollbar.css' aquí.
-// Modal.setAppElement('#root'); // ¡Eliminar esta línea de aquí! Debe ir en el entry point.
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onProjectCreated: () => void;
+  onProjectUpdated: () => void;
+  project: Project;
 }
 
+// Define la interfaz del formulario para tener un tipado correcto
 interface ProjectFormData {
   title: string;
   description: string;
-  tags: string;
+  tags: string; // Asume que las tags se manejarán como un string separado por comas en el formulario
   visibility: 'public' | 'private';
   github?: string;
   demo?: string;
 }
 
-export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }: Props) {
-  const { user } = useAuth();
+export default function UpdateProjectModal({ isOpen, onClose, onProjectUpdated, project }: Props) {
+  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<ProjectFormData>();
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProjectFormData>();
+  const [previewUrl, setPreviewUrl] = useState<string>(project.imageUrl || ''); // Initial state from project
 
-  const onSubmit = async (data: ProjectFormData) => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      let uploadedImageUrl = '';
-      if (imageFile) {
-        uploadedImageUrl = await uploadImage(imageFile, user.uid);
-      }
-
-      await addDoc(collection(db, 'projects'), {
-        ...data,
-        imageUrl: uploadedImageUrl,
-        tags: data.tags.split(',').map(tag => tag.trim()),
-        createdAt: Timestamp.now(),
-        userId: user.uid,
-        deleted: false,
-      });
-      // Limpiar estados y formulario al éxito
-      reset();
-      setPreviewUrl('');
-      setImageFile(null);
-      onClose(); // Cerrar el modal
-      onProjectCreated(); // Callback para notificar que se creó
-    } catch (err) {
-      console.error('Error al crear el proyecto:', err);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    // Solo actualiza el formulario si el modal está abierto y tenemos un proyecto
+    if (isOpen && project) {
+      setValue('title', project.title);
+      setValue('description', project.description);
+      // Asegúrate de que tags se convierta a un string separado por comas si es un array
+      setValue('tags', Array.isArray(project.tags) ? project.tags.join(', ') : project.tags);
+      setValue('visibility', project.visibility);
+      setValue('github', project.github || '');
+      setValue('demo', project.demo || '');
+      setPreviewUrl(project.imageUrl || ''); // Actualiza la URL de la vista previa al abrir el modal
+    } else if (!isOpen) {
+        // Limpiar el formulario y los estados de imagen al cerrar el modal
+        reset();
+        setImageFile(null);
+        setPreviewUrl('');
     }
-  };
+  }, [project, setValue, isOpen, reset]); // Añadir isOpen y reset a las dependencias
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,25 +61,55 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
       };
       reader.readAsDataURL(file);
     } else {
-      // Limpiar la vista previa si el usuario deselecciona la imagen
-      setPreviewUrl('');
+      // Si el usuario deselecciona la imagen, vuelve a la URL original del proyecto
+      // o a nada si no había imagen original
+      setPreviewUrl(project.imageUrl || '');
       setImageFile(null);
+    }
+  };
+
+  const onSubmit = async (data: ProjectFormData) => { // Tipado de data a ProjectFormData
+    setLoading(true);
+    try {
+      let imageUrlToSave = project.imageUrl; // Usar la URL existente por defecto
+      if (imageFile) {
+        // Si hay un nuevo archivo de imagen, subirlo
+        imageUrlToSave = await uploadImage(imageFile, project.userId);
+      }
+
+      await updateDoc(doc(db, 'projects', project.id), {
+        ...data,
+        imageUrl: imageUrlToSave, // Guardar la URL final
+        // Asegúrate de que las tags se conviertan a array antes de guardar en Firestore
+        tags: data.tags.split(',').map((tag: string) => tag.trim()),
+      });
+
+      // Limpiar estados y formulario después del éxito
+      reset();
+      setImageFile(null);
+      setPreviewUrl('');
+      onProjectUpdated();
+      onClose();
+    } catch (err) {
+      console.error('Error actualizando el proyecto:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   // Función para manejar el cierre del modal, incluyendo el reseteo del formulario
   const handleCloseModal = () => {
     reset(); // Resetea los campos del formulario
-    setPreviewUrl(''); // Limpia la URL de vista previa
     setImageFile(null); // Limpia el archivo de imagen
+    setPreviewUrl(project.imageUrl || ''); // Restaura la preview a la imagen original del proyecto o a vacío
     onClose(); // Llama a la función de cierre del modal del padre
   };
 
   return (
     <BaseModal
       isOpen={isOpen}
-      onClose={handleCloseModal} // Pasa nuestra función de cierre personalizada
-      title="Crear nuevo proyecto" // El título del modal
+      onClose={handleCloseModal} // Usa nuestra función de cierre personalizada
+      title="Actualizar proyecto" // Título específico para el modal de actualización
       footerContent={
         <>
           <button
@@ -108,16 +125,17 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
             onClick={handleSubmit(onSubmit)} // Conecta el botón al envío del formulario
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded font-medium"
           >
-            {loading ? 'Creando...' : 'Crear proyecto'}
+            {loading ? 'Actualizando...' : 'Actualizar'}
           </button>
         </>
       }
     >
-      {/* Todo el contenido del formulario va aquí como children del BaseModal */}
+      {/* Contenido del formulario va aquí como children del BaseModal */}
+      {/* Hemos unificado las clases de los inputs para que sean consistentes con CreateProjectModal */}
       <form className="space-y-4">
         <div>
           <input
-            {...register('title', { required: 'El título es obligatorio' })}
+            {...register('title')}
             className="w-full px-4 py-2 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder:text-sm text-darkText dark:text-white"
             placeholder="Título del proyecto"
           />
@@ -179,7 +197,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
 
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm text-darkText dark:text-white">
-            <input type="radio" value="public" {...register('visibility')} defaultChecked />
+            <input type="radio" value="public" {...register('visibility')} />
             Público
           </label>
           <label className="flex items-center gap-2 text-sm text-darkText dark:text-white">
