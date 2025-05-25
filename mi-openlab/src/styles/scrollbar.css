@@ -1,17 +1,40 @@
-
-@import "tailwindcss";
-.custom-scrollbar::-webkit-scrollbar {
+/* === WEBKIT (Chrome, Edge, Safari, Opera) === */
+.custom-scrollbar-styling::-webkit-scrollbar {
   width: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
+  height: 8px;
   background: transparent;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.5); /* slate-500 con opacidad */
-  border-radius: 6px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+
+.custom-scrollbar-styling::-webkit-scrollbar-track {
+  background: #1F2937; /* zinc-800 */
+  border-radius: 9999px; /* totalmente ovalado */
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(129, 140, 248, 0.7); /* indigo-400 on hover */
+
+.custom-scrollbar-styling::-webkit-scrollbar-thumb {
+  background: #6366F1; /* indigo-500 */
+  border-radius: 9999px; /* ovalado */
+  border: 2px solid transparent; /* crea espacio interior visual */
+  background-clip: padding-box;
+}
+
+.custom-scrollbar-styling::-webkit-scrollbar-thumb:hover {
+  background: #818CF8; /* indigo-400 */
+}
+
+/* Elimina las flechas (pseudoelementos start/end/buttons) */
+.custom-scrollbar-styling::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+/* Esquina si hay scroll vertical y horizontal */
+.custom-scrollbar-styling::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* === FIREFOX === */
+.custom-scrollbar-styling {
+  scrollbar-width: thin;
+  scrollbar-color: #6366F1 #1F2937; /* thumb track */
 }
