@@ -1,5 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+const scrollbar = require('tailwind-scrollbar');
+
+module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -23,6 +25,6 @@ export default {
     },
   },
   plugins: [
-    require('tailwind-scrollbar')({ nocompatible: true }),
+    scrollbar({ nocompatible: true }),
   ],
 }

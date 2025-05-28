@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import DashboardView from './DashboardView';
 import HistoryView from './HistoryView';
@@ -6,28 +7,12 @@ import MyProjectsView from './MyProjectsView';
 import MyProfileView from './MyProfileView';
 
 export default function PortalLayout() {
-  const [view, setView] = useState('dashboard');
   const [isOpen] = useState(false); // 👈 estado global del sidebar
 
-  const renderView = () => {
-    switch (view) {
-      case 'dashboard':
-        return <DashboardView />;
-      case 'history':
-        return <HistoryView />;
-      case 'projects':
-        return <MyProjectsView />;
-      case 'profile':
-        return <MyProfileView />;
-      default:
-        return <DashboardView />;
-    }
-  };
-
   return (
-    <div className="min-h-screen flex bg-light dark:bg-darkBackground text-darkText dark:text-white transition-all duration-300">
-      {/* Sidebar con props */}
-      <Sidebar current={view} setCurrent={setView}  />
+    <div className="min-h-screen flex bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white transition-all duration-300">
+      {/* Sidebar */}
+      <Sidebar />
 
       {/* Contenido desplazable */}
       <main
@@ -35,7 +20,13 @@ export default function PortalLayout() {
           isOpen ? 'translate-x-64 lg:ml-64' : 'translate-x-0 lg:ml-64'
         }`}
       >
-        {renderView()}
+        <Routes>
+          <Route path="/" element={<DashboardView />} />
+          <Route path="/history" element={<HistoryView />} />
+          <Route path="/projects" element={<MyProjectsView />} />
+          <Route path="/profile" element={<MyProfileView />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
     </div>
   );

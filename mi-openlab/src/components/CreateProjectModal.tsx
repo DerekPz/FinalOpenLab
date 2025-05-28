@@ -23,8 +23,8 @@ interface ProjectFormData {
   description: string;
   tags: string;
   visibility: 'public' | 'private';
-  github?: string;
-  demo?: string;
+  githubUrl?: string;
+  demoUrl?: string;
 }
 
 export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }: Props) {
@@ -151,12 +151,12 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
 
         <div className="flex flex-col sm:flex-row gap-4">
           <input
-            {...register('github')}
+            {...register('githubUrl')}
             className="w-full px-4 py-2 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder:text-sm text-darkText dark:text-white"
             placeholder="Enlace GitHub (opcional)"
           />
           <input
-            {...register('demo')}
+            {...register('demoUrl')}
             className="w-full px-4 py-2 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder:text-sm text-darkText dark:text-white"
             placeholder="Enlace demo (opcional)"
           />

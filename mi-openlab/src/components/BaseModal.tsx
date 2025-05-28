@@ -27,7 +27,7 @@ export default function BaseModal({ isOpen, onClose, title, children, footerCont
         relative
         w-full max-w-2xl
         mx-4 sm:mx-auto mt-5 sm:mt-10 /* Manteniendo tu margin-top para que no choque con la barra superior */
-        bg-white dark:bg-zinc-900
+        bg-white dark:bg-zinc-800
         p-6 sm:p-8 rounded-lg shadow-xl outline-none
         flex flex-col
         max-h-[90vh]
@@ -38,7 +38,7 @@ export default function BaseModal({ isOpen, onClose, title, children, footerCont
       htmlOpenClassName="ReactModal__Html--open"
     >
       {/* Título del Modal */}
-      <h2 className="text-2xl font-bold mb-6 text-darkText dark:text-white">{title}</h2>
+      <h2 className="text-2xl font-bold mb-6 text-zinc-900 dark:text-white">{title}</h2>
 
       {/* Este div contendrá el contenido principal (el formulario) y tendrá el SCROLL */}
       <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar-styling">

@@ -2,25 +2,29 @@ export interface Project {
   id: string;
   title: string;
   description: string;
-  tags: string[];              // <- asegúrate que es un array de strings
-  visibility: 'public' | 'private';
-  github?: string;
-  demo?: string;
-  imageUrl?: string;           // <- puede ser opcional
+  imageUrl?: string;
   userId: string;
-  createdAt?: any;             // o Timestamp si lo estás usando con Firebase
-  deleted?: boolean;
-    author?: string;
-  likes?: number;
-  favoritedBy?: string[];
-  likedBy?: string[];
+  author?: string;
+  visibility: 'public' | 'private';
+  deleted: boolean;
+  tags?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  likes: number;
+  views: number;
+  githubUrl?: string;
+  demoUrl?: string;
+  techStack?: string[];
 }
 
 export interface Comment {
   id: string;
   userId: string;
   userName: string;
+  userPhotoURL: string;
   comment: string;
-  createdAt: any; // o Timestamp si usas Firebase Timestamp
+  createdAt: {
+    toDate: () => Date;
+  };
 }
 

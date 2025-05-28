@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { auth, googleProvider } from '../services/firebase';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-} from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
+import { loginUser, signInWithGoogle } from '../services/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../services/firebase';
 
 interface LoginRegisterProps {
   mode: 'login' | 'register';
@@ -14,34 +13,39 @@ interface LoginRegisterProps {
 export default function LoginRegister({ mode }: LoginRegisterProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const isLogin = mode === 'login';
 
-  const handleAuth = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLogin) {
+      await handleLogin(e);
+    } else {
+      await handleRegister(e);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
     setError('');
+
     if (!email || !password) {
       setError('Por favor ingresa correo y contraseña.');
+      setLoading(false);
       return;
     }
 
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-      }
-      navigate('/');
+      await loginUser(email, password);
+      navigate('/portal');
     } catch (err: any) {
       console.error(err.message);
       switch (err.code) {
-        case 'auth/email-already-in-use':
-          setError('Ese correo ya está registrado.');
-          break;
-        case 'auth/weak-password':
-          setError('La contraseña debe tener al menos 6 caracteres.');
-          break;
         case 'auth/invalid-email':
           setError('Correo inválido.');
           break;
@@ -52,17 +56,80 @@ export default function LoginRegister({ mode }: LoginRegisterProps) {
         default:
           setError('Error al autenticar. Verifica los datos.');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogle = async () => {
     setError('');
     try {
-      await signInWithPopup(auth, googleProvider);
-      navigate('/');
+      await signInWithGoogle();
+      navigate('/portal');
     } catch (err: any) {
       console.error(err.message);
       setError('No se pudo iniciar sesión con Google.');
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (!email || !password) {
+      setError('Por favor ingresa correo y contraseña.');
+      setLoading(false);
+      return;
+    }
+
+    if (!displayName) {
+      setError('Por favor ingresa tu nombre.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Crear perfil de usuario con datos de reputación inicializados
+      await setDoc(doc(db, 'userProfiles', user.uid), {
+        uid: user.uid,
+        email: user.email,
+        displayName: displayName || user.email?.split('@')[0],
+        photoURL: user.photoURL,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        // Inicializar datos de reputación
+        reputation: 0,
+        achievements: [],
+        reputationHistory: [],
+        projectCount: 0,
+        followersCount: 0,
+        likesReceived: 0,
+        commentsReceived: 0,
+        techStack: []
+      });
+
+      navigate('/portal');
+    } catch (error: any) {
+      console.error('Error during registration:', error);
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          setError('Ese correo ya está registrado.');
+          break;
+        case 'auth/weak-password':
+          setError('La contraseña debe tener al menos 6 caracteres.');
+          break;
+        case 'auth/invalid-email':
+          setError('Correo inválido.');
+          break;
+        default:
+          setError(error.message || 'Error durante el registro');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,13 +146,24 @@ export default function LoginRegister({ mode }: LoginRegisterProps) {
           </div>
         )}
 
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <input
+              type="text"
+              placeholder="Nombre completo"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 placeholder:text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 text-darkText dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              disabled={loading}
+            />
+          )}
           <input
             type="email"
             placeholder="Correo electrónico"
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 placeholder:text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 text-darkText dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
           />
           <input
             type="password"
@@ -93,16 +171,18 @@ export default function LoginRegister({ mode }: LoginRegisterProps) {
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 placeholder:text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 text-darkText dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
           />
           <button
-            onClick={handleAuth}
-            className="w-full bg-primary hover:bg-indigo-600 text-white font-medium py-2 rounded-lg transition-all duration-200"
+            type="submit"
+            className="w-full bg-primary hover:bg-indigo-600 text-white font-medium py-2 rounded-lg transition-all duration-200 disabled:opacity-50"
+            disabled={loading}
           >
-            {isLogin ? 'Entrar' : 'Crear cuenta'}
+            {loading ? 'Cargando...' : isLogin ? 'Entrar' : 'Crear cuenta'}
           </button>
-        </div>
+        </form>
 
-        <div className="text-sm text-center text-gray-500 dark:text-gray-400">
+        <div className="text-center text-sm text-gray-600 dark:text-gray-400">
           {isLogin ? (
             <>
               ¿No tienes cuenta?{' '}
@@ -134,7 +214,8 @@ export default function LoginRegister({ mode }: LoginRegisterProps) {
 
         <button
           onClick={handleGoogle}
-          className="w-full border border-gray-300 dark:border-zinc-600 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition"
+          className="w-full border border-gray-300 dark:border-zinc-600 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition disabled:opacity-50"
+          disabled={loading}
         >
           Continuar con Google
         </button>

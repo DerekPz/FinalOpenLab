@@ -25,12 +25,12 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onEdit, o
       {/* Botón de cierre */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 text-zinc-400 hover:text-white"
+        className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-100 dark:hover:text-white transition-colors"
       >
         <X size={22} />
       </button>
 
-      <h2 className="text-2xl font-bold mb-4 text-darkText dark:text-white">
+      <h2 className="text-2xl font-bold mb-4 text-zinc-900 dark:text-white">
         {project.title}
       </h2>
 
@@ -40,16 +40,16 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onEdit, o
         className="w-full h-64 object-cover rounded-lg mb-4"
       />
 
-      <p className="text-darkText dark:text-white mb-4 text-sm leading-relaxed">
+      <p className="text-zinc-600 dark:text-zinc-400 mb-4 text-sm leading-relaxed">
         {project.description}
       </p>
 
-      {project.tags?.length > 0 && (
+      {project.tags && project.tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
           {project.tags.map(tag => (
             <span
               key={tag}
-              className="bg-indigo-200 text-indigo-800 text-xs font-medium px-2 py-1 rounded"
+              className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 text-xs font-medium px-2 py-1 rounded"
             >
               #{tag}
             </span>
@@ -57,10 +57,10 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onEdit, o
         </div>
       )}
 
-      <div className="flex flex-wrap gap-6 mb-6">
-        {project.github && (
+      <div className="flex gap-4 mb-6">
+        {project.githubUrl && (
           <a
-            href={project.github}
+            href={project.githubUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-indigo-500 underline hover:text-indigo-400 text-sm"
@@ -68,9 +68,9 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onEdit, o
             Ver GitHub
           </a>
         )}
-        {project.demo && (
+        {project.demoUrl && (
           <a
-            href={project.demo}
+            href={project.demoUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-indigo-500 underline hover:text-indigo-400 text-sm"

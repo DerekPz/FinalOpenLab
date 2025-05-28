@@ -1,43 +1,36 @@
 // src/layout/PortalLayout.tsx
-import { Link, Outlet, useLocation } from 'react-router-dom';
-
-const navItems = [
-  { label: 'Inicio', path: '/portal' },
-  { label: 'Mis proyectos', path: '/portal/projects' },
-  { label: 'Favoritos', path: '/portal/favorites' },
-  { label: 'Crear proyecto', path: '/portal/create' },
-];
+import { Outlet } from 'react-router-dom';
+import Sidebar from '../pages/portal/components/Sidebar';
+import { useState, useEffect } from 'react';
 
 export default function PortalLayout() {
-  const { pathname } = useLocation();
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+
+  // Escuchar el evento personalizado del sidebar
+  useEffect(() => {
+    const handleSidebarChange = (e: CustomEvent) => {
+      setSidebarExpanded(e.detail.expanded);
+    };
+
+    window.addEventListener('sidebarChange' as any, handleSidebarChange);
+    return () => {
+      window.removeEventListener('sidebarChange' as any, handleSidebarChange);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-zinc-900 border-r dark:border-zinc-700 p-6 hidden md:block">
-        <h2 className="text-xl font-bold text-darkText dark:text-white mb-6">
-          Mi Panel
-        </h2>
-        <nav className="space-y-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`block px-3 py-2 rounded-lg font-medium ${
-                pathname === item.path
-                  ? 'bg-primary text-white'
-                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 p-6 bg-light dark:bg-darkBackground">
-        <Outlet />
+    <div className="grid h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900" 
+         style={{ 
+           gridTemplateColumns: sidebarExpanded ? '256px 1fr' : '80px 1fr',
+           transition: 'grid-template-columns 300ms'
+         }}>
+      <Sidebar />
+      <main className="overflow-auto">
+        <div className="h-full max-w-4xl mx-auto px-4 sm:px-6 py-8">
+          <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl border border-zinc-700/50 shadow-xl shadow-black/20 p-4 sm:p-6">
+            <Outlet />
+          </div>
+        </div>
       </main>
     </div>
   );

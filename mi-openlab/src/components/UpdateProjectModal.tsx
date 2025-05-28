@@ -22,8 +22,8 @@ interface ProjectFormData {
   description: string;
   tags: string; // Asume que las tags se manejarán como un string separado por comas en el formulario
   visibility: 'public' | 'private';
-  github?: string;
-  demo?: string;
+  githubUrl?: string;
+  demoUrl?: string;
 }
 
 export default function UpdateProjectModal({ isOpen, onClose, onProjectUpdated, project }: Props) {
@@ -40,8 +40,8 @@ export default function UpdateProjectModal({ isOpen, onClose, onProjectUpdated, 
       // Asegúrate de que tags se convierta a un string separado por comas si es un array
       setValue('tags', Array.isArray(project.tags) ? project.tags.join(', ') : project.tags);
       setValue('visibility', project.visibility);
-      setValue('github', project.github || '');
-      setValue('demo', project.demo || '');
+      setValue('githubUrl', project.githubUrl || '');
+      setValue('demoUrl', project.demoUrl || '');
       setPreviewUrl(project.imageUrl || ''); // Actualiza la URL de la vista previa al abrir el modal
     } else if (!isOpen) {
         // Limpiar el formulario y los estados de imagen al cerrar el modal
@@ -161,12 +161,12 @@ export default function UpdateProjectModal({ isOpen, onClose, onProjectUpdated, 
 
         <div className="flex flex-col sm:flex-row gap-4">
           <input
-            {...register('github')}
+            {...register('githubUrl')}
             className="w-full px-4 py-2 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder:text-sm text-darkText dark:text-white"
             placeholder="Enlace GitHub (opcional)"
           />
           <input
-            {...register('demo')}
+            {...register('demoUrl')}
             className="w-full px-4 py-2 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder:text-sm text-darkText dark:text-white"
             placeholder="Enlace demo (opcional)"
           />

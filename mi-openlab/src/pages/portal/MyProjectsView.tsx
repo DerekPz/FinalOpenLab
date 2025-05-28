@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 // import { Edit, Trash2, PlusCircle } from 'lucide-react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, ExternalLink } from 'lucide-react';
 import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -108,7 +108,7 @@ export default function MyProjectsView() {
             <div
               key={project.id}
               onClick={() => handleOpenDetails(project)}
-              className="cursor-pointer flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 overflow-hidden h-full"
+              className="cursor-pointer flex flex-col bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-700/70 overflow-hidden h-full"
             >
               <img
                 className="object-cover h-48 w-full"
@@ -117,22 +117,48 @@ export default function MyProjectsView() {
               />
               <div className="flex flex-col justify-between p-4 leading-normal">
                 <div className="flex justify-between items-center">
-                  <h5 className="text-lg font-bold text-gray-900 dark:text-white">
+                  <h5 className="text-lg font-bold text-zinc-900 dark:text-white">
                     {project.title}
                   </h5>
                   <span className={`text-xs px-2 py-1 rounded ${project.visibility === 'private' ? 'bg-red-500' : 'bg-green-600'} text-white`}>
                     {project.visibility === 'private' ? 'Privado' : 'Público'}
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 dark:text-gray-300 my-2 line-clamp-2">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 my-2 line-clamp-2">
                   {project.description}
                 </p>
                 <div className="flex flex-wrap gap-2 mb-1">
                   {project.tags?.map(tag => (
-                    <span key={tag} className="bg-indigo-200 text-indigo-800 text-xs font-medium px-2 py-1 rounded">
+                    <span key={tag} className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 text-xs font-medium px-2 py-1 rounded">
                       #{tag}
                     </span>
                   ))}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {project.demoUrl && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(project.demoUrl, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                    >
+                      <ExternalLink size={14} />
+                      Demo
+                    </button>
+                  )}
+                  {project.githubUrl && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(project.githubUrl, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                    >
+                      <ExternalLink size={14} />
+                      GitHub
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

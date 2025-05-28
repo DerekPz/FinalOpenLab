@@ -2,19 +2,83 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Reglas para proyectos
-    match /projects/{projectId} {
-      allow read: if true;  // Cualquiera puede leer proyectos
-      allow write: if request.auth != null;  // Solo usuarios autenticados pueden escribir
-      
-      // Reglas para comentarios dentro de proyectos
-      match /comments/{commentId} {
-        allow read: if true;  // Cualquiera puede leer comentarios
-        allow create: if request.auth != null  // Solo usuarios autenticados pueden crear comentarios
-          && request.resource.data.userId == request.auth.uid;  // El userId debe coincidir con el usuario autenticado
-        allow update, delete: if request.auth != null
-          && request.auth.uid == resource.data.userId;  // Solo el autor puede editar/eliminar sus comentarios
+    // Funciones auxiliares
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Verifica si solo se están actualizando los campos permitidos para interacciones
+    function isValidInteractionUpdate() {
+      let allowedFields = ['reputation', 'reputationHistory', 'achievements', 'likesReceived', 'commentsReceived', 'followersCount', 'projectCount', 'isTopRanked'];
+      let updateFields = request.resource.data.diff(resource.data).affectedKeys();
+      return updateFields.hasOnly(allowedFields);
+    }
+
+    // Verifica si la actualización solo afecta a los campos de likes y favoritos
+    function isValidLikeOrFavoriteUpdate() {
+      let allowedFields = ['likedBy', 'likes', 'favoritedBy'];
+      let updateFields = request.resource.data.diff(resource.data).affectedKeys();
+      return updateFields.hasOnly(allowedFields);
+    }
+
+    // Reglas para los perfiles de usuario
+    match /userProfiles/{userId} {
+      // Permitir lectura pública para el ranking
+      allow read: if true;
+      allow create: if isOwner(userId);
+      // Permitir actualizaciones si es el propietario o si es una actualización de reputación válida
+      allow update: if isOwner(userId) || 
+        (isAuthenticated() && isValidInteractionUpdate());
+      allow delete: if isOwner(userId);
+
+      // Reglas para la subcolección de seguidores
+      match /followers/{followerId} {
+        allow read: if true;
+        // Solo permitir crear si el followerId coincide con el uid del usuario autenticado
+        allow create: if isAuthenticated() && request.auth.uid == followerId;
+        // Solo permitir eliminar si el followerId coincide con el uid del usuario autenticado
+        allow delete: if isAuthenticated() && request.auth.uid == followerId;
       }
+    }
+
+    // Reglas para los proyectos
+    match /projects/{projectId} {
+      allow read: if true;  // Los proyectos son públicos
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||  // El propietario puede actualizar todo
+        isValidLikeOrFavoriteUpdate()  // Cualquier usuario autenticado puede actualizar likes y favoritos
+      );
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+
+      // Reglas para comentarios en la subcolección
+      match /comments/{commentId} {
+        allow read: if true;  // Los comentarios son públicos
+        allow create: if isAuthenticated();  // Cualquier usuario autenticado puede comentar
+        allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;  // Solo el autor puede editar
+        allow delete: if isAuthenticated() && (
+          resource.data.userId == request.auth.uid ||  // El autor puede eliminar
+          get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid  // El dueño del proyecto puede eliminar
+        );
+      }
+
+      // Reglas para likes
+      match /likes/{likeId} {
+        allow read: if true;
+        allow create: if isAuthenticated() 
+          && request.resource.data.userId == request.auth.uid;  // Solo puedes dar like con tu propio userId
+        allow delete: if isAuthenticated() 
+          && resource.data.userId == request.auth.uid;  // Solo puedes quitar tu propio like
+      }
+    }
+
+    // Reglas por defecto - denegar todo lo demás
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 } 
