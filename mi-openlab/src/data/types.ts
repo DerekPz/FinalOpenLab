@@ -10,5 +10,17 @@ export interface Project {
   userId: string;
   createdAt?: any;             // o Timestamp si lo estás usando con Firebase
   deleted?: boolean;
+    author?: string;
+  likes?: number;
+  favoritedBy?: string[];
+  likedBy?: string[];
+}
+
+export interface Comment {
+  id: string;
+  userId: string;
+  userName: string;
+  comment: string;
+  createdAt: any; // o Timestamp si usas Firebase Timestamp
 }
 

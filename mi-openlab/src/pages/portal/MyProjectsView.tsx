@@ -1,33 +1,26 @@
-// src/views/MyProjectsView.tsx
-
 import { useEffect, useState } from 'react';
-import { Edit, Trash2, PlusCircle } from 'lucide-react';
+// import { Edit, Trash2, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import Swal from 'sweetalert2';
 import CreateProjectModal from '../../components/CreateProjectModal';
-import type { Project } from '../../data/types';
 import UpdateProjectModal from '../../components/UpdateProjectModal';
-
+import ProjectDetailModal from '../../components/ProjectDetailsModal';
+import type { Project } from '../../data/types';
 
 export default function MyProjectsView() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  // Estado para el modal de creación
   const [showCreateModal, setShowCreateModal] = useState(false);
-  // Estado para el modal de actualización
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  // Estado para el proyecto que se va a editar
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
-
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null); // Para mostrar detalle
 
   const fetchProjects = async () => {
     if (!user) return;
-    const q = query(
-      collection(db, 'projects'),
-      where('userId', '==', user.uid)
-    );
+    const q = query(collection(db, 'projects'), where('userId', '==', user.uid));
     const snapshot = await getDocs(q);
     const results = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() } as Project))
@@ -48,7 +41,7 @@ export default function MyProjectsView() {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
     });
 
     if (result.isConfirmed) {
@@ -58,25 +51,30 @@ export default function MyProjectsView() {
     }
   };
 
-  // Función para abrir el modal de edición
   const handleEditClick = (project: Project) => {
-    setProjectToEdit(project); // Establece el proyecto a editar
-    setShowUpdateModal(true);   // Abre el modal de edición
+    setProjectToEdit(project);
+    setShowUpdateModal(true);
   };
 
-  // Función para cerrar el modal de edición
   const handleCloseUpdateModal = () => {
     setShowUpdateModal(false);
-    setProjectToEdit(null); // Limpia el proyecto a editar al cerrar el modal
-    fetchProjects(); // Vuelve a cargar los proyectos después de una actualización
+    setProjectToEdit(null);
+    fetchProjects();
   };
 
-  // Función para cerrar el modal de creación
   const handleCloseCreateModal = () => {
     setShowCreateModal(false);
-    fetchProjects(); // Vuelve a cargar los proyectos después de una creación
+    fetchProjects();
   };
 
+  const handleOpenDetails = (project: Project) => {
+    setSelectedProject(project);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedProject(null);
+    fetchProjects();
+  };
 
   if (!user) return null;
 
@@ -85,7 +83,7 @@ export default function MyProjectsView() {
       <div className="flex justify-between items-center border-b border-zinc-700 pb-4">
         <h2 className="text-3xl font-bold text-darkText dark:text-white">Mis proyectos</h2>
         <button
-          onClick={() => setShowCreateModal(true)} // Ahora usa showCreateModal
+          onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
         >
           <PlusCircle size={18} />
@@ -93,10 +91,9 @@ export default function MyProjectsView() {
         </button>
       </div>
 
-      {/* Modal de CREACIÓN */}
       <CreateProjectModal
-        isOpen={showCreateModal} // Controlado por showCreateModal
-        onClose={handleCloseCreateModal} // Usa la función de cierre específica
+        isOpen={showCreateModal}
+        onClose={handleCloseCreateModal}
         onProjectCreated={fetchProjects}
       />
 
@@ -110,7 +107,8 @@ export default function MyProjectsView() {
           {projects.map(project => (
             <div
               key={project.id}
-              className="flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 overflow-hidden h-full"
+              onClick={() => handleOpenDetails(project)}
+              className="cursor-pointer flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 overflow-hidden h-full"
             >
               <img
                 className="object-cover h-48 w-full"
@@ -126,28 +124,15 @@ export default function MyProjectsView() {
                     {project.visibility === 'private' ? 'Privado' : 'Público'}
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 dark:text-gray-300 my-2">
+                <p className="text-sm text-gray-700 dark:text-gray-300 my-2 line-clamp-2">
                   {project.description}
                 </p>
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div className="flex flex-wrap gap-2 mb-1">
                   {project.tags?.map(tag => (
                     <span key={tag} className="bg-indigo-200 text-indigo-800 text-xs font-medium px-2 py-1 rounded">
                       #{tag}
                     </span>
                   ))}
-                </div>
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => handleEditClick(project)} // Llama a la función que abre el modal de edición con el proyecto
-                    className="text-sm text-yellow-400 hover:underline flex items-center gap-1">
-                    <Edit size={16} /> Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(project.id)}
-                    className="text-sm text-red-400 hover:underline flex items-center gap-1"
-                  >
-                    <Trash2 size={16} /> Eliminar
-                  </button>
                 </div>
               </div>
             </div>
@@ -155,13 +140,23 @@ export default function MyProjectsView() {
         </div>
       )}
 
-      {/* Modal de ACTUALIZACIÓN (fuera del map, para que solo haya uno) */}
-      {projectToEdit && ( // Solo renderiza el modal de actualización si hay un proyecto para editar
+      {projectToEdit && (
         <UpdateProjectModal
-          isOpen={showUpdateModal} // Controlado por showUpdateModal
-          onClose={handleCloseUpdateModal} // Usa la función de cierre específica
+          isOpen={showUpdateModal}
+          onClose={handleCloseUpdateModal}
           onProjectUpdated={fetchProjects}
-          project={projectToEdit} // Pasa el proyecto seleccionado para editar
+          project={projectToEdit}
+        />
+      )}
+
+      {selectedProject && (
+        <ProjectDetailModal
+          isOpen={true}
+          project={selectedProject}
+          onClose={handleCloseDetails}
+          onEdit={() => handleEditClick(selectedProject)}
+          onDelete={() => handleDelete(selectedProject.id)}
+          isOwner={selectedProject.userId === user.uid}
         />
       )}
     </div>

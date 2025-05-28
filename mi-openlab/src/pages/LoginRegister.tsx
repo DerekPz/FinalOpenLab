@@ -59,7 +59,7 @@ export default function LoginRegister({ mode }: LoginRegisterProps) {
     setError('');
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate('/explore');
+      navigate('/');
     } catch (err: any) {
       console.error(err.message);
       setError('No se pudo iniciar sesión con Google.');

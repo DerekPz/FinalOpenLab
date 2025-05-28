@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas para proyectos
+    match /projects/{projectId} {
+      allow read: if true;  // Cualquiera puede leer proyectos
+      allow write: if request.auth != null;  // Solo usuarios autenticados pueden escribir
+      
+      // Reglas para comentarios dentro de proyectos
+      match /comments/{commentId} {
+        allow read: if true;  // Cualquiera puede leer comentarios
+        allow create: if request.auth != null  // Solo usuarios autenticados pueden crear comentarios
+          && request.resource.data.userId == request.auth.uid;  // El userId debe coincidir con el usuario autenticado
+        allow update, delete: if request.auth != null
+          && request.auth.uid == resource.data.userId;  // Solo el autor puede editar/eliminar sus comentarios
+      }
+    }
+  }
+} 

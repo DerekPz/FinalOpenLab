@@ -1,7 +1,8 @@
+// src/components/ProjectCard.tsx
 import type { FC } from 'react';
 
-
 export interface ProjectCardProps {
+  projectId: string;
   title: string;
   description: string;
   imageUrl: string;
@@ -40,8 +41,11 @@ const ProjectCard: FC<ProjectCardProps> = ({
 
       <div className="p-4 space-y-2">
         <h2 className="text-lg font-semibold text-dark dark:text-white">{title}</h2>
-        <p className="text-sm text-muted dark:text-gray-400 line-clamp-2">{description}</p>
-
+        <p className="text-sm text-muted dark:text-gray-400">
+          {description.length > 60
+            ? description.slice(0, 60) + '...'
+            : description}
+        </p>
         <div className="flex flex-wrap gap-2">
           {tags.map((tag, idx) => (
             <span

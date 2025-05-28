@@ -7,6 +7,8 @@
     "jsx": "react-jsx", // importante para soportar JSX con TS
     "moduleResolution": "node",
     "target": "esnext",
+      "esModuleInterop": true,
+  "allowSyntheticDefaultImports": true
     }
 
 }

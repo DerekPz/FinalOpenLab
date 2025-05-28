@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { Sun, Moon } from 'lucide-react';
-import { useDarkMode } from '../hooks/useDarkMode'; // tu hook personalizado
+import { useDarkMode } from '../hooks/useDarkMode';
 
 export default function Navbar() {
   const { user } = useAuth();
@@ -13,6 +13,11 @@ export default function Navbar() {
   const handleLogout = async () => {
     await signOut(auth);
     navigate('/');
+  };
+
+  const handleDarkModeToggle = () => {
+    console.log('Toggling dark mode. Current state:', isDark);
+    toggleDark();
   };
 
   return (
@@ -64,10 +69,15 @@ export default function Navbar() {
 
         {/* Toggle dark mode */}
         <button
-          onClick={toggleDark}
-          className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+          onClick={handleDarkModeToggle}
+          className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-zinc-800 dark:text-white"
+          aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
         >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          {isDark ? (
+            <Sun className="w-5 h-5" />
+          ) : (
+            <Moon className="w-5 h-5" />
+          )}
         </button>
       </div>
     </nav>

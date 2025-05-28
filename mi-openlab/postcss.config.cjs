@@ -1,8 +1,7 @@
-const tailwindcss = require('@tailwindcss/postcss')
-
-module.exports = {
+import { defineConfig } from 'vite'
+import tailwindcss from '@tailwindcss/vite'
+export default defineConfig({
   plugins: [
     tailwindcss(),
-    require('autoprefixer')
-  ]
-}
+  ],
+})

@@ -1,17 +1,21 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  darkMode: 'class',
+export default {
   content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
+  future: {
+    removeDeprecatedGapUtilities: true,
+    purgeLayersByDefault: true,
+  },
   theme: {
     extend: {
       colors: {
-    primary: '#2563eb',
-    light: '#F9FAFB',
-    darkText: '#1f2937', // gris-800 de Tailwind
-    darkBackground: '#111827', // gris-900 // 👈 nuevo nombre para evitar conflicto
+        primary: '#4F46E5', // Indigo-600
+        light: '#F9FAFB',
+        darkBackground: '#111827',
+        darkText: '#1f2937',
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

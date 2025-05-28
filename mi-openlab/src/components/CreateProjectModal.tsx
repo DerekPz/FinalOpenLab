@@ -1,6 +1,6 @@
 // src/components/CreateProjectModal.tsx
 
-import React, { useState } from 'react'; // Asegúrate de importar React si lo necesitas
+import  { useState } from 'react'; // Asegúrate de importar React si lo necesitas
 import { useForm } from 'react-hook-form';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -50,6 +50,14 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         createdAt: Timestamp.now(),
         userId: user.uid,
         deleted: false,
+        author:
+          user.displayName
+            ? user.displayName
+            : user.email
+              ? user.email.split('@')[0]
+              : 'Anónimo',
+        likes: 0,
+        likedBy: [],
       });
       // Limpiar estados y formulario al éxito
       reset();

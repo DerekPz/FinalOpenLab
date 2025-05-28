@@ -1,6 +1,7 @@
 // src/components/BaseModal.tsx
 
-import React from 'react';
+import * as React from 'react';
+
 import Modal from 'react-modal';
 import '../styles/scrollbar.css'; // Asegúrate de que la ruta sea correcta
 
