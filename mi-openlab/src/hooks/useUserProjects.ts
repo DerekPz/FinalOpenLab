@@ -2,18 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
-
-export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  imageUrl?: string;
-  visibility: 'public' | 'private';
-  githubUrl?: string;
-  demoUrl?: string;
-  createdAt?: any;
-}
+import type { Project } from '../data/types';
 
 export function useUserProjects() {
   const { user } = useAuth();

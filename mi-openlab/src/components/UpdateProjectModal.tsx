@@ -35,21 +35,21 @@ export default function UpdateProjectModal({ isOpen, onClose, onProjectUpdated, 
   useEffect(() => {
     // Solo actualiza el formulario si el modal está abierto y tenemos un proyecto
     if (isOpen && project) {
-      setValue('title', project.title);
-      setValue('description', project.description);
+      setValue('title', project.title || '');
+      setValue('description', project.description || '');
       // Asegúrate de que tags se convierta a un string separado por comas si es un array
-      setValue('tags', Array.isArray(project.tags) ? project.tags.join(', ') : project.tags);
-      setValue('visibility', project.visibility);
+      setValue('tags', Array.isArray(project.tags) ? project.tags.join(', ') : (project.tags || ''));
+      setValue('visibility', project.visibility || 'public');
       setValue('githubUrl', project.githubUrl || '');
       setValue('demoUrl', project.demoUrl || '');
-      setPreviewUrl(project.imageUrl || ''); // Actualiza la URL de la vista previa al abrir el modal
+      setPreviewUrl(project.imageUrl || '');
     } else if (!isOpen) {
-        // Limpiar el formulario y los estados de imagen al cerrar el modal
-        reset();
-        setImageFile(null);
-        setPreviewUrl('');
+      // Limpiar el formulario y los estados de imagen al cerrar el modal
+      reset();
+      setImageFile(null);
+      setPreviewUrl('');
     }
-  }, [project, setValue, isOpen, reset]); // Añadir isOpen y reset a las dependencias
+  }, [project, setValue, isOpen, reset]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

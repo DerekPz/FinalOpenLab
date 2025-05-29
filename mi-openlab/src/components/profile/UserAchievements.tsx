@@ -1,6 +1,5 @@
 import type { FC } from 'react';
 import type { Achievement } from '../../types/user';
-import { Trophy, Star, Award } from 'lucide-react';
 
 interface UserAchievementsProps {
   achievements: Achievement[];
@@ -43,8 +42,8 @@ const UserAchievements: FC<UserAchievementsProps> = ({
           <div className="space-y-2">
             {achievements.map((achievement, index) => (
               <div key={index} className="flex items-center gap-2">
-                <span className="text-xl">🏆</span>
-                <span className="text-sm text-zinc-300">{achievement}</span>
+                <span className="text-xl">{achievement.icon}</span>
+                <span className="text-sm text-zinc-300">{achievement.name}</span>
               </div>
             ))}
             {achievements.length === 0 && (

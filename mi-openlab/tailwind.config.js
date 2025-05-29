@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-const scrollbar = require('tailwind-scrollbar');
+import scrollbar from 'tailwind-scrollbar';
 
-module.exports = {
+export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",

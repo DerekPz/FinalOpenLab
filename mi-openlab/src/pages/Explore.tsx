@@ -7,6 +7,7 @@ import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import type { Project } from '../data/types';
 import { updateReputation } from '../services/reputation';
+import { addFavorite, removeFavorite } from '../services/favorites';
 
 type ProjectWithFavorite = Project & { 
   isFavorite?: boolean;
@@ -122,9 +123,17 @@ export default function Explore() {
           ? favoritedBy.filter((uid: string) => uid !== user.uid)
           : [...favoritedBy, user.uid];
         
+        // Actualizar el proyecto
         await updateDoc(projectRef, {
           favoritedBy: newFavoritedBy
         });
+
+        // Actualizar la colección de favoritos del usuario
+        if (isCurrentlyFavorite) {
+          await removeFavorite(user.uid, projectId);
+        } else {
+          await addFavorite(user.uid, projectId);
+        }
         
         // Actualizar estado local
         setProjects(prev => prev.map(p => {
@@ -163,31 +172,33 @@ export default function Explore() {
   });
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-gradient-to-br dark:from-zinc-900 dark:via-black dark:to-zinc-900">
-      <div className="container mx-auto px-4 py-10 sm:px-8 lg:px-20">
-        <ExploreHeader
-          search={search}
-          setSearch={setSearch}
-          filter={filter}
-          setFilter={setFilter}
-          category={category}
-          setCategory={setCategory}
-        />
+    <div className="min-h-screen w-full bg-zinc-50/80 dark:bg-zinc-900">
+      <div className="w-full max-w-[2000px] mx-auto px-4 py-6 sm:py-10 sm:px-6 lg:px-8">
+        <div className="pt-16 sm:pt-20 pb-8 sm:pb-12">
+          <ExploreHeader
+            search={search}
+            setSearch={setSearch}
+            filter={filter}
+            setFilter={setFilter}
+            category={category}
+            setCategory={setCategory}
+          />
+        </div>
 
         {filteredProjects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="flex flex-col items-center justify-center gap-3 text-center">
-              <div className="text-5xl">🔎</div>
-              <h3 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16">
+            <div className="flex flex-col items-center justify-center gap-3 text-center px-4">
+              <div className="text-4xl sm:text-5xl">🔎</div>
+              <h3 className="text-xl sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
                 No se encontraron proyectos
               </h3>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-sm">
+              <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 max-w-sm">
                 Intenta ajustar los filtros o usa otras palabras clave.
               </p>
             </div>
           </div>
         ) : (
-          <section className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-8">
+          <section className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredProjects.map((project) => (
               <ProjectCard
                 key={project.id}
@@ -217,7 +228,7 @@ export default function Explore() {
         <ProjectModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
-          project={selectedProject}
+          project={selectedProject as Project}
           user={user || undefined}
         />
       </div>

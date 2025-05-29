@@ -118,15 +118,21 @@ export default function DashboardView() {
 
         // 5. Actualizar el perfil
         setProfile({
-          ...userData,
           uid: user.uid,
+          email: user.email || '',
+          displayName: userData.displayName,
+          photoURL: userData.photoURL,
+          bio: userData.bio,
+          techStack: userData.techStack || [],
           projects: projects,
           achievements: [],
-          techStack: userData.techStack || [],
           reputation: userData.reputation || 0,
           rank: userData.rank || 0,
           createdAt: userData.createdAt instanceof Timestamp ? userData.createdAt.toDate() : new Date(),
-          updatedAt: userData.updatedAt instanceof Timestamp ? userData.updatedAt.toDate() : new Date()
+          updatedAt: userData.updatedAt instanceof Timestamp ? userData.updatedAt.toDate() : new Date(),
+          followersCount: followers.length,
+          followingCount: 0,
+          likesReceived: projects.reduce((total, project) => total + (project.likes || 0), 0)
         });
 
       } catch (error) {

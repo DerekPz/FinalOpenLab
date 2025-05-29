@@ -5,9 +5,13 @@ import { getProjectsByUser } from '../services/projects';
 import { followUser, unfollowUser, isFollowing as checkIsFollowing } from '../services/follow';
 import type { UserProfile } from '../types/user';
 import type { Project } from '../data/types';
-import { Linkedin, Github, Globe, ArrowLeft, UserPlus, UserMinus } from 'lucide-react';
+import { Linkedin, Github, Globe, ArrowLeft, Trophy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getTechIconUrl } from '../utils/techStackIcons';
+import FollowersModal from '../components/FollowersModal';
+import ProjectModal from '../components/ProjectModal';
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 export default function UserProfileView() {
   const { userId } = useParams();
@@ -18,6 +22,10 @@ export default function UserProfileView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUserFollowing, setIsUserFollowing] = useState(false);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [projectModalOpen, setProjectModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -39,6 +47,26 @@ export default function UserProfileView() {
           setError('Este usuario aún no ha configurado su perfil');
           setProfile(null);
           return;
+        }
+
+        // Sincronizar contadores de seguidores/seguidos
+        const followingRef = collection(db, `userProfiles/${userId}/following`);
+        const followingSnapshot = await getDocs(followingRef);
+        const followingCount = followingSnapshot.size;
+
+        const followersRef = collection(db, `userProfiles/${userId}/followers`);
+        const followersSnapshot = await getDocs(followersRef);
+        const followersCount = followersSnapshot.size;
+
+        // Actualizar contadores si son diferentes
+        if (followingCount !== userProfile.followingCount || followersCount !== userProfile.followersCount) {
+          console.log('Updating follow counts:', { followingCount, followersCount });
+          await updateDoc(doc(db, 'userProfiles', userId), {
+            followingCount,
+            followersCount
+          });
+          userProfile.followingCount = followingCount;
+          userProfile.followersCount = followersCount;
         }
         
         setProfile(userProfile);
@@ -140,44 +168,87 @@ export default function UserProfileView() {
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-4 sm:p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
               <div className="w-32 h-32 flex-shrink-0">
-                <img
-                  src={profile?.photoURL || '/default-avatar.png'}
-                  alt={profile?.displayName}
-                  className="w-full h-full rounded-full object-cover border-4 border-white dark:border-zinc-700 shadow-lg"
-                />
+                <div className="relative w-full h-full">
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-zinc-700 shadow-lg">
+                    <img
+                      src={profile?.photoURL || '/default-avatar.png'}
+                      alt={profile?.displayName}
+                      className="w-full h-full object-cover"
+                      style={{
+                        objectFit: 'cover',
+                        aspectRatio: '1/1'
+                      }}
+                    />
+                  </div>
+                  {profile?.isTopRanked && (
+                    <div 
+                      className="absolute -top-2 -right-2 bg-gradient-to-br from-yellow-400 to-yellow-600 text-white p-1.5 rounded-full shadow-lg animate-pulse"
+                      title="Top 1 del Ranking"
+                    >
+                      <Trophy className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="flex-1 text-center sm:text-left">
                 <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
                   <div>
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-                      {profile?.displayName}
-                    </h1>
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+                        {profile?.displayName}
+                      </h1>
+                      {profile?.isTopRanked && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                          Top #1 🏆
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-2 text-zinc-600 dark:text-zinc-400">
                       {profile?.bio || 'Sin biografía'}
                     </p>
+
+                    {/* Estadísticas de seguidores */}
+                    <div className="flex items-center gap-6 mt-4">
+                      <button 
+                        onClick={() => setShowFollowersModal(true)}
+                        className="text-center hover:bg-zinc-100 dark:hover:bg-zinc-700/50 px-3 py-1 rounded-lg transition"
+                      >
+                        <div className="text-lg font-bold text-zinc-900 dark:text-white">
+                          {profile?.followersCount || 0}
+                        </div>
+                        <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                          Seguidores
+                        </div>
+                      </button>
+
+                      <button 
+                        onClick={() => setShowFollowingModal(true)}
+                        className="text-center hover:bg-zinc-100 dark:hover:bg-zinc-700/50 px-3 py-1 rounded-lg transition"
+                      >
+                        <div className="text-lg font-bold text-zinc-900 dark:text-white">
+                          {profile?.followingCount || 0}
+                        </div>
+                        <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                          Siguiendo
+                        </div>
+                      </button>
+                    </div>
                   </div>
-                  
+
+                  {/* Botón de seguir/dejar de seguir */}
                   {user && user.uid !== userId && (
                     <button
                       onClick={handleFollow}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition w-full sm:w-auto justify-center ${
-                        isUserFollowing
-                          ? 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
+                      className={`
+                        px-6 py-2 rounded-lg font-medium transition-all
+                        ${isUserFollowing
+                          ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-600'
                           : 'bg-primary text-white hover:bg-indigo-600'
-                      }`}
+                        }
+                      `}
                     >
-                      {isUserFollowing ? (
-                        <>
-                          <UserMinus className="w-5 h-5" />
-                          Dejar de seguir
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="w-5 h-5" />
-                          Seguir
-                        </>
-                      )}
+                      {isUserFollowing ? 'Dejar de seguir' : 'Seguir'}
                     </button>
                   )}
                 </div>
@@ -269,7 +340,10 @@ export default function UserProfileView() {
                   <div
                     key={project.id}
                     className="group relative bg-zinc-50 dark:bg-zinc-700 rounded-xl overflow-hidden cursor-pointer hover:shadow-md transition"
-                    onClick={() => {/* TODO: Abrir modal de proyecto */}}
+                    onClick={() => {
+                      setSelectedProject(project);
+                      setProjectModalOpen(true);
+                    }}
                   >
                     <div className="aspect-video">
                       <img
@@ -303,6 +377,54 @@ export default function UserProfileView() {
           </div>
         </div>
       </div>
+
+      {/* Modales */}
+      {userId && (
+        <>
+          <FollowersModal
+            isOpen={showFollowersModal}
+            onClose={() => setShowFollowersModal(false)}
+            userId={userId}
+            mode="followers"
+          />
+          <FollowersModal
+            isOpen={showFollowingModal}
+            onClose={() => setShowFollowingModal(false)}
+            userId={userId}
+            mode="following"
+          />
+        </>
+      )}
+
+      {/* Modal de proyecto */}
+      {projectModalOpen && selectedProject && (
+        <ProjectModal
+          open={true}
+          onClose={() => {
+            setProjectModalOpen(false);
+            setSelectedProject(null);
+          }}
+          project={{
+            id: selectedProject.id,
+            title: selectedProject.title,
+            description: selectedProject.description,
+            imageUrl: selectedProject.imageUrl,
+            userId: selectedProject.userId,
+            author: selectedProject.author || '',
+            visibility: selectedProject.visibility,
+            deleted: selectedProject.deleted || false,
+            tags: selectedProject.tags || [],
+            createdAt: selectedProject.createdAt,
+            updatedAt: selectedProject.updatedAt,
+            likes: selectedProject.likes || 0,
+            views: selectedProject.views || 0,
+            githubUrl: selectedProject.githubUrl,
+            demoUrl: selectedProject.demoUrl,
+            techStack: selectedProject.techStack || []
+          }}
+          user={user || undefined}
+        />
+      )}
     </div>
   );
 } 

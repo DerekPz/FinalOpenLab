@@ -2,18 +2,13 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
+import type { Project } from '../data/types';
 
-interface FirebaseTimestamp {
-  toDate(): Date;
-  seconds: number;
-  nanoseconds: number;
-}
-
-interface Project {
+interface ProjectStats {
   id: string;
   likes?: number;
   likedBy?: string[];
-  updatedAt: FirebaseTimestamp;
+  updatedAt: Timestamp;
   userId: string;
   deleted?: boolean;
 }
@@ -30,63 +25,54 @@ export function useUserStats() {
   const [stats, setStats] = useState<UserStats>({
     projectCount: 0,
     totalLikes: 0,
-    lastActivity: '',
+    lastActivity: 'Sin actividad reciente',
     isLoading: true,
   });
 
   useEffect(() => {
     async function fetchStats() {
       if (!user) {
+        setStats(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
       try {
-        console.log('Fetching stats for user ID:', user.uid);
-        
-        // Obtener proyectos del usuario
         const projectsRef = collection(db, 'projects');
         const userProjectsQuery = query(
           projectsRef,
-          where('userId', '==', user.uid),
-          where('deleted', '==', false)
+          where('userId', '==', user.uid)
         );
         
         const projectsSnapshot = await getDocs(userProjectsQuery);
-        const projects = projectsSnapshot.docs.map<Project>(doc => {
+        const projects = projectsSnapshot.docs.map<ProjectStats>(doc => {
           const data = doc.data();
-          console.log('Project data:', { id: doc.id, ...data });
           return {
             id: doc.id,
-            ...data,
-            updatedAt: data.updatedAt as FirebaseTimestamp
-          } as Project;
+            likes: data.likes,
+            likedBy: data.likedBy,
+            updatedAt: data.updatedAt as Timestamp,
+            userId: data.userId,
+            deleted: data.deleted
+          };
         });
 
-        // Filtrar proyectos no eliminados (por si acaso)
         const activeProjects = projects.filter(project => !project.deleted);
-        console.log('Active projects:', activeProjects.length);
-
         const projectCount = activeProjects.length;
         let totalLikes = 0;
-        let lastActivityTimestamp: FirebaseTimestamp | null = null;
+        let lastActivityTimestamp: Timestamp | null = null;
 
-        // Procesar cada proyecto
         activeProjects.forEach((project) => {
-          // Contar likes - usar el número directo de likes si existe, si no, usar la longitud de likedBy
           if (typeof project.likes === 'number') {
             totalLikes += project.likes;
           } else if (Array.isArray(project.likedBy)) {
             totalLikes += project.likedBy.length;
           }
 
-          // Actualizar última actividad
-          const updatedAt = project.updatedAt;
-          if (!lastActivityTimestamp || updatedAt.seconds > lastActivityTimestamp.seconds) {
-            lastActivityTimestamp = updatedAt;
+          if (!lastActivityTimestamp || project.updatedAt.seconds > lastActivityTimestamp.seconds) {
+            lastActivityTimestamp = project.updatedAt;
           }
         });
 
-        // Formatear última actividad
         let lastActivity = 'Sin actividad reciente';
         if (lastActivityTimestamp) {
           const lastActivityDate = lastActivityTimestamp.toDate();
@@ -108,13 +94,6 @@ export function useUserStats() {
             lastActivity = `Hace ${diffDays} días`;
           }
         }
-
-        console.log('Setting final stats:', {
-          projectCount,
-          totalLikes,
-          lastActivity,
-          lastActivityDate: lastActivityTimestamp?.toDate().toISOString()
-        });
 
         setStats({
           projectCount,

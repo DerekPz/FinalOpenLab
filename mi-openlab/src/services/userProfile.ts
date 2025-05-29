@@ -39,12 +39,11 @@ export async function createUserProfile(uid: string, data: UserProfileFormData):
       updatedAt: new Date(),
       techStack: data.techStack || [],
       reputation: 0,
+      rank: 0,
       achievements: [],
-      reputationHistory: [],
-      projectCount: 0,
       followersCount: 0,
-      likesReceived: 0,
-      commentsReceived: 0
+      followingCount: 0,
+      likesReceived: 0
     };
 
     const profileWithTimestamps = {

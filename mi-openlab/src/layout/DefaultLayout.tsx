@@ -7,9 +7,11 @@ interface Props {
 
 export default function DefaultLayout({ children }: Props) {
   return (
-    <div className="min-h-screen bg-light dark:bg-dark text-dark dark:text-white">
+    <div className="min-h-screen w-full bg-light dark:bg-dark">
       <Navbar />
-      <main className="p-4 sm:px-8 lg:px-20">{children}</main>
+      <main className="w-full">
+        {children}
+      </main>
     </div>
   );
 }

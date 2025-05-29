@@ -107,6 +107,7 @@ export default function LoginRegister({ mode }: LoginRegisterProps) {
         reputationHistory: [],
         projectCount: 0,
         followersCount: 0,
+        followingCount: 0,
         likesReceived: 0,
         commentsReceived: 0,
         techStack: []
@@ -173,6 +174,16 @@ export default function LoginRegister({ mode }: LoginRegisterProps) {
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
           />
+          {isLogin && (
+            <div className="text-right">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-primary hover:underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+          )}
           <button
             type="submit"
             className="w-full bg-primary hover:bg-indigo-600 text-white font-medium py-2 rounded-lg transition-all duration-200 disabled:opacity-50"

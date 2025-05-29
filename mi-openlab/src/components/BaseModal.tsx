@@ -3,7 +3,7 @@
 import * as React from 'react';
 
 import Modal from 'react-modal';
-import '../styles/scrollbar.css'; // Asegúrate de que la ruta sea correcta
+import '../styles/scrollbar.css';
 
 interface BaseModalProps {
   isOpen: boolean;

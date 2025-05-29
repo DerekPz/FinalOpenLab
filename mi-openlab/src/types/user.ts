@@ -1,4 +1,4 @@
-import type { User as FirebaseUser } from 'firebase/auth';
+import type { Project } from '../data/types';
 
 export interface TechStack {
   name: string;
@@ -25,9 +25,14 @@ export interface ReputationEvent {
 export interface UserComment {
   id: string;
   userId: string;
+  userName: string;
+  userPhotoURL?: string;
   content: string;
-  createdAt: Date;
-  updatedAt: Date;
+  comment?: string;
+  createdAt: {
+    toDate: () => Date;
+  } | Date;
+  updatedAt?: Date;
   likes: number;
   projectId: string;
   parentCommentId?: string;
@@ -49,26 +54,11 @@ export interface UserProfile {
   websiteUrl?: string;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl?: string;
-  tags: string[];
-  userId: string;
-  author: string;
-  createdAt: Date;
-  updatedAt: Date;
-  likes: number;
-  views: number;
-  githubUrl?: string;
-  demoUrl?: string;
-  visibility: 'public' | 'private';
-  deleted: boolean;
-  techStack?: string[];
-  likedBy: string[];
+  followersCount: number;
+  followingCount: number;
+  isTopRanked?: boolean;
+  projectCount?: number;
+  likesReceived: number;
 }
 
 export interface FirestoreUserProfile {

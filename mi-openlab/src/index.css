@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles */
+/* Estilos personalizados */
 @layer components {
   .animate-fade-in-up {
     animation: fade-in-up 0.8s ease-out both;
@@ -20,9 +20,26 @@
       transform: translateY(0);
     }
   }
+
+  @keyframes gradient-x {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animate-gradient-x {
+    background-size: 200% auto;
+    animation: gradient-x 8s ease infinite;
+  }
 }
 
-/* Base styles */
+/* Estilos base */
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;

@@ -4,6 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import { getUserProfile, updateUserProfile, uploadProfileImage } from '../../services/userProfile';
 import type { UserProfile, TechStack } from '../../types/user';
 import { Linkedin, Github, Globe, Plus, X, Upload } from 'lucide-react';
+import FollowersModal from '../../components/FollowersModal';
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 
 // Mapeo de nombres de tecnologías a sus identificadores en Simple Icons
 const techLogoMapping: { [key: string]: string } = {
@@ -77,6 +80,8 @@ export default function MyProfileView() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
   const [newTech, setNewTech] = useState<Partial<TechStack>>({
     name: '',
     level: 'Básico',
@@ -105,6 +110,26 @@ export default function MyProfileView() {
           console.log('No profile found for user'); // Debug log
           setError('No se encontró el perfil. Por favor, contacta a soporte.');
           return;
+        }
+
+        // Sincronizar contadores de seguidores/seguidos
+        const followingRef = collection(db, `userProfiles/${user.uid}/following`);
+        const followingSnapshot = await getDocs(followingRef);
+        const followingCount = followingSnapshot.size;
+
+        const followersRef = collection(db, `userProfiles/${user.uid}/followers`);
+        const followersSnapshot = await getDocs(followersRef);
+        const followersCount = followersSnapshot.size;
+
+        // Actualizar contadores si son diferentes
+        if (followingCount !== userProfile.followingCount || followersCount !== userProfile.followersCount) {
+          console.log('Updating follow counts:', { followingCount, followersCount });
+          await updateDoc(doc(db, 'userProfiles', user.uid), {
+            followingCount,
+            followersCount
+          });
+          userProfile.followingCount = followingCount;
+          userProfile.followersCount = followersCount;
         }
         
         setProfile(userProfile);
@@ -183,10 +208,10 @@ export default function MyProfileView() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8 ">
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
       {/* Cabecera del perfil */}
-      <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700/50 ">
-        <div className="flex items-start gap-6 ">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700/50">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
           <div className="relative group">
             <img
               src={profile.photoURL || user.photoURL || '/default-avatar.png'}
@@ -203,21 +228,62 @@ export default function MyProfileView() {
               />
             </label>
           </div>
-          
+
           <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={profile.displayName}
+                      onChange={e => handleProfileUpdate({ displayName: e.target.value })}
+                      className="bg-transparent border-b border-zinc-300 dark:border-zinc-600 focus:outline-none focus:border-primary"
+                    />
+                  ) : (
+                    profile.displayName
+                  )}
+                </h1>
+
+                {/* Estadísticas de seguidores */}
+                <div className="flex items-center gap-6 mt-4">
+                  <button 
+                    onClick={() => setShowFollowersModal(true)}
+                    className="text-center hover:bg-zinc-100 dark:hover:bg-zinc-700/50 px-3 py-1 rounded-lg transition"
+                  >
+                    <div className="text-lg font-bold text-zinc-900 dark:text-white">
+                      {profile?.followersCount || 0}
+                    </div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Seguidores
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => setShowFollowingModal(true)}
+                    className="text-center hover:bg-zinc-100 dark:hover:bg-zinc-700/50 px-3 py-1 rounded-lg transition"
+                  >
+                    <div className="text-lg font-bold text-zinc-900 dark:text-white">
+                      {profile?.followingCount || 0}
+                    </div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Siguiendo
+                    </div>
+                  </button>
+                </div>
+
                 {isEditing ? (
-                  <input
-                    type="text"
-                    value={profile.displayName}
-                    onChange={e => handleProfileUpdate({ displayName: e.target.value })}
-                    className="bg-transparent border-b border-zinc-300 dark:border-zinc-600 focus:outline-none focus:border-primary"
+                  <textarea
+                    value={profile.bio}
+                    onChange={e => handleProfileUpdate({ bio: e.target.value })}
+                    placeholder="Escribe una breve biografía..."
+                    className="mt-2 w-full bg-transparent border rounded-lg p-2 focus:outline-none focus:border-primary dark:border-zinc-600"
+                    rows={3}
                   />
                 ) : (
-                  profile.displayName
+                  <p className="mt-2 text-zinc-600 dark:text-zinc-400">{profile.bio || 'Sin biografía'}</p>
                 )}
-              </h1>
+              </div>
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className="text-primary hover:text-indigo-700 font-medium"
@@ -225,23 +291,11 @@ export default function MyProfileView() {
                 {isEditing ? 'Guardar' : 'Editar'}
               </button>
             </div>
-            
-            {isEditing ? (
-              <textarea
-                value={profile.bio}
-                onChange={e => handleProfileUpdate({ bio: e.target.value })}
-                placeholder="Escribe una breve biografía..."
-                className="mt-2 w-full bg-transparent border rounded-lg p-2 focus:outline-none focus:border-primary dark:border-zinc-600"
-                rows={3}
-              />
-            ) : (
-              <p className="mt-2 text-zinc-600 dark:text-zinc-400">{profile.bio || 'Sin biografía'}</p>
-            )}
           </div>
         </div>
 
         {/* Enlaces profesionales */}
-        <div className="mt-6 flex gap-4 ">
+        <div className="mt-6 flex flex-wrap justify-center sm:justify-start gap-4">
           {profile.linkedInUrl && (
             <a
               href={profile.linkedInUrl}
@@ -426,6 +480,24 @@ export default function MyProfileView() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modales de seguidores/seguidos */}
+      {user && (
+        <>
+          <FollowersModal
+            isOpen={showFollowersModal}
+            onClose={() => setShowFollowersModal(false)}
+            userId={user.uid}
+            mode="followers"
+          />
+          <FollowersModal
+            isOpen={showFollowingModal}
+            onClose={() => setShowFollowingModal(false)}
+            userId={user.uid}
+            mode="following"
+          />
+        </>
       )}
     </div>
   );

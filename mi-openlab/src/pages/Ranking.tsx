@@ -83,9 +83,9 @@ export default function Ranking() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 py-8">
-        <div className="container mx-auto px-4">
-          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6 text-center">
+      <div className="min-h-screen w-full bg-zinc-50/80 dark:bg-zinc-900">
+        <div className="w-full max-w-[2000px] mx-auto px-4 py-6 sm:py-10 sm:px-6 lg:px-8">
+          <div className="bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm rounded-xl shadow-lg p-6 text-center border border-zinc-200/20 dark:border-zinc-700/50">
             <p className="text-red-500 dark:text-red-400">{error}</p>
           </div>
         </div>
@@ -94,118 +94,122 @@ export default function Ranking() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 py-8">
-      <div className="container mx-auto px-4 space-y-6">
-        {/* Ranking de Usuarios */}
-        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm">
-          <div className="p-6 border-b border-zinc-200 dark:border-zinc-700">
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-                  Ranking de Usuarios
-                </h1>
-                <p className="text-zinc-600 dark:text-zinc-400 mt-1">
-                  Los usuarios más activos y con mejor reputación en la plataforma
-                </p>
-              </div>
-              <button
-                onClick={() => setShowInfo(!showInfo)}
-                className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-                title="Ver cómo funciona el sistema de puntos"
-              >
-                <Info className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-              </button>
-            </div>
+    <div className="min-h-screen w-full bg-zinc-50/80 dark:bg-zinc-900">
+      <div className="w-full max-w-[2000px] mx-auto px-4 py-6 sm:py-10 sm:px-6 lg:px-8">
+        {/* Header con título y descripción */}
+        <div className="pt-16 sm:pt-20 pb-8 sm:pb-12 text-center space-y-2">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 animate-gradient-x pb-2">
+            Ranking de Usuarios
+          </h1>
+          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
+            Los usuarios más activos y con mejor reputación en la plataforma
+          </p>
+        </div>
+
+        {/* Contenedor principal */}
+        <div className="bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm rounded-xl shadow-lg border border-zinc-200/20 dark:border-zinc-700/50">
+          {/* Header con botón de info */}
+          <div className="p-6 border-b border-zinc-200/50 dark:border-zinc-700/50 flex justify-end">
+            <button
+              onClick={() => setShowInfo(!showInfo)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors"
+            >
+              <Info className="w-4 h-4" />
+              {showInfo ? 'Ocultar información' : 'Ver sistema de puntos'}
+            </button>
           </div>
 
           {/* Sistema de Puntos y Logros (Colapsable) */}
           {showInfo && (
-            <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
-              <div className="space-y-6">
-                {/* Sistema de Puntos */}
-                <div>
-                  <h3 className="font-medium text-sm text-zinc-900 dark:text-white mb-3">
-                    Sistema de Puntos
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {pointsInfo.map((info) => (
-                      <div
-                        key={info.id}
-                        className="relative"
-                        onMouseEnter={() => setTooltipPoint(info.id)}
-                        onMouseLeave={() => setTooltipPoint(null)}
-                      >
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-zinc-700/50 border border-zinc-200 dark:border-zinc-600">
-                          <div className="text-primary">
-                            {info.icon}
-                          </div>
-                          <span className="text-sm text-zinc-700 dark:text-zinc-300">
+            <div className="p-6 border-b border-zinc-200/50 dark:border-zinc-700/50 space-y-8">
+              {/* Sistema de Puntos */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  Sistema de Puntos
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {pointsInfo.map((info) => (
+                    <div
+                      key={info.id}
+                      className="relative group"
+                      onMouseEnter={() => setTooltipPoint(info.id)}
+                      onMouseLeave={() => setTooltipPoint(null)}
+                    >
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-white/80 dark:bg-zinc-700/50 border border-zinc-200/50 dark:border-zinc-600/50 group-hover:border-indigo-500/50 dark:group-hover:border-indigo-400/50 transition-all">
+                        <div className="p-2 rounded-lg bg-indigo-500/10 dark:bg-indigo-400/10 text-indigo-600 dark:text-indigo-400">
+                          {info.icon}
+                        </div>
+                        <div>
+                          <div className="font-medium text-zinc-900 dark:text-white">
                             {info.action}
-                          </span>
-                          <span className="text-sm font-medium text-primary">
-                            +{info.points}
-                          </span>
-                        </div>
-                        {tooltipPoint === info.id && (
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 text-xs text-center text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg shadow-lg">
-                            {info.description}
-                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-zinc-800 dark:bg-zinc-700"></div>
                           </div>
-                        )}
+                          <div className="text-sm text-indigo-600 dark:text-indigo-400">
+                            +{info.points} pts
+                          </div>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                      {tooltipPoint === info.id && (
+                        <div className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 text-xs text-center text-white bg-zinc-800 dark:bg-black rounded-lg shadow-xl">
+                          {info.description}
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-zinc-800 dark:bg-black"></div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                {/* Logros Disponibles */}
-                <div>
-                  <h3 className="font-medium text-sm text-zinc-900 dark:text-white mb-3">
-                    Logros Disponibles
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {ACHIEVEMENTS.map((achievement) => (
-                      <div
-                        key={achievement.id}
-                        className="relative"
-                        onMouseEnter={() => setTooltipAchievement(achievement.id)}
-                        onMouseLeave={() => setTooltipAchievement(null)}
-                      >
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-zinc-700/50 border border-zinc-200 dark:border-zinc-600">
-                          <div className="text-primary">
-                            {achievementIcons[achievement.id as keyof typeof achievementIcons]}
-                          </div>
-                          <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                            {achievement.name}
-                          </span>
+              {/* Logros Disponibles */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  Logros Disponibles
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {ACHIEVEMENTS.map((achievement) => (
+                    <div
+                      key={achievement.id}
+                      className="relative group"
+                      onMouseEnter={() => setTooltipAchievement(achievement.id)}
+                      onMouseLeave={() => setTooltipAchievement(null)}
+                    >
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-white/80 dark:bg-zinc-700/50 border border-zinc-200/50 dark:border-zinc-600/50 group-hover:border-purple-500/50 dark:group-hover:border-purple-400/50 transition-all">
+                        <div className="p-2 rounded-lg bg-purple-500/10 dark:bg-purple-400/10 text-purple-600 dark:text-purple-400">
+                          {achievementIcons[achievement.id as keyof typeof achievementIcons]}
                         </div>
-                        {tooltipAchievement === achievement.id && (
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 text-xs text-center text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg shadow-lg">
-                            {achievement.description}
-                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-zinc-800 dark:bg-zinc-700"></div>
-                          </div>
-                        )}
+                        <span className="font-medium text-zinc-900 dark:text-white">
+                          {achievement.name}
+                        </span>
                       </div>
-                    ))}
-                  </div>
+                      {tooltipAchievement === achievement.id && (
+                        <div className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 text-xs text-center text-white bg-zinc-800 dark:bg-black rounded-lg shadow-xl">
+                          {achievement.description}
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-zinc-800 dark:bg-black"></div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
 
+          {/* Lista de usuarios */}
           {loading ? (
-            <div className="p-6 text-center text-zinc-600 dark:text-zinc-400">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              Cargando ranking...
+            <div className="p-12 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-[3px] border-current border-t-transparent text-indigo-600 dark:text-indigo-400" role="status" aria-label="loading">
+                <span className="sr-only">Cargando...</span>
+              </div>
+              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Cargando ranking...</p>
             </div>
           ) : users.length === 0 ? (
-            <div className="p-6 text-center text-zinc-600 dark:text-zinc-400">
-              No hay usuarios en el ranking todavía.
+            <div className="p-12 text-center">
+              <p className="text-zinc-600 dark:text-zinc-400">No hay usuarios en el ranking todavía.</p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
+            <div className="divide-y divide-zinc-200/50 dark:divide-zinc-700/50">
               {users.map((user) => (
                 <div key={user.uid} className="flex items-center">
-                  <div className="flex items-center justify-center w-12 pl-4">
+                  <div className="flex items-center justify-center w-16 pl-6">
                     {getRankIcon(user.rank)}
                   </div>
                   <div className="flex-1">

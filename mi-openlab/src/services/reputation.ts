@@ -146,10 +146,10 @@ export async function getUserRanking(limitCount = 10) {
     console.log('Fetching user ranking...');
     const usersRef = collection(db, 'userProfiles');
     
-    // Ordenar primero por reputación (descendente) y luego por fecha de actualización (ascendente)
-    // Esto asegura que entre usuarios con la misma reputación, gane el que lo logró primero
+    // Filtrar usuarios con reputación > 0 y ordenar por reputación
     const q = query(
       usersRef,
+      where('reputation', '>', 0),
       orderBy('reputation', 'desc'),
       orderBy('updatedAt', 'asc'),
       limit(limitCount)
@@ -185,17 +185,31 @@ export async function getUserRanking(limitCount = 10) {
     // Ejecutar todas las actualizaciones en una sola operación
     await batch.commit();
 
-    const users = snapshot.docs.map((doc, index) => {
+    // Obtener el conteo real de proyectos para cada usuario
+    const usersWithProjects = await Promise.all(snapshot.docs.map(async (doc, index) => {
       const data = doc.data();
+      
+      // Obtener proyectos del usuario
+      const projectsRef = collection(db, 'projects');
+      const projectsQuery = query(
+        projectsRef,
+        where('userId', '==', doc.id),
+        where('deleted', '==', false),
+        where('visibility', '==', 'public')
+      );
+      const projectsSnapshot = await getDocs(projectsQuery);
+      const realProjectCount = projectsSnapshot.size;
+
       return {
         ...(data as UserProfile),
         rank: index + 1,
+        projectCount: realProjectCount,
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
         updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt
       };
-    });
+    }));
 
-    return users;
+    return usersWithProjects;
   } catch (error) {
     console.error('Error fetching user ranking:', error);
     throw error;

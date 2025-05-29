@@ -2,9 +2,10 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signInWithPopup,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail
 } from 'firebase/auth';
-import type { UserCredential } from 'firebase/auth';
+import type { UserCredential, ActionCodeSettings } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
 import { createUserProfile, getUserProfile } from './userProfile';
 
@@ -70,6 +71,22 @@ export async function signInWithGoogle(): Promise<UserCredential> {
     return result;
   } catch (error) {
     console.error('Error in signInWithGoogle:', error);
+    throw error;
+  }
+}
+
+export async function sendPasswordResetEmail(email: string): Promise<void> {
+  try {
+    const actionCodeSettings: ActionCodeSettings = {
+      // URL que se abrirá después de hacer clic en el enlace del correo
+      url: window.location.origin + '/reset-password',
+      // Manejar el código en la misma pestaña/ventana
+      handleCodeInApp: true
+    };
+
+    await firebaseSendPasswordResetEmail(auth, email, actionCodeSettings);
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
     throw error;
   }
 } 

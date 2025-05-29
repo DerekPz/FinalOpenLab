@@ -1,32 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import DashboardView from './DashboardView';
 import HistoryView from './HistoryView';
 import MyProjectsView from './MyProjectsView';
 import MyProfileView from './MyProfileView';
+import FavoritesView from './FavoritesView';
 
 export default function PortalLayout() {
-  const [isOpen] = useState(false); // 👈 estado global del sidebar
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      setSidebarExpanded(window.innerWidth >= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Escuchar cambios en el sidebar
+  useEffect(() => {
+    const handleSidebarChange = (e: CustomEvent) => {
+      setSidebarExpanded(e.detail.expanded);
+    };
+
+    window.addEventListener('sidebarChange' as any, handleSidebarChange);
+    return () => {
+      window.removeEventListener('sidebarChange' as any, handleSidebarChange);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen flex bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white transition-all duration-300">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white transition-all duration-300">
+      {/* Sidebar - Ahora con posición fija */}
       <Sidebar />
 
-      {/* Contenido desplazable */}
+      {/* Contenido principal - Responsive padding */}
       <main
-        className={`flex-1 p-6 lg:p-10 overflow-y-auto transition-all duration-300 ${
-          isOpen ? 'translate-x-64 lg:ml-64' : 'translate-x-0 lg:ml-64'
-        }`}
+        className={`
+          min-h-screen w-full transition-all duration-300
+          ${isMobile 
+            ? 'pl-0' // Sin padding en móvil
+            : sidebarExpanded 
+              ? 'pl-64' // Padding completo cuando el sidebar está expandido
+              : 'pl-20' // Padding reducido cuando el sidebar está colapsado
+          }
+        `}
       >
-        <Routes>
-          <Route path="/" element={<DashboardView />} />
-          <Route path="/history" element={<HistoryView />} />
-          <Route path="/projects" element={<MyProjectsView />} />
-          <Route path="/profile" element={<MyProfileView />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <div className="p-4 md:p-6 lg:p-10">
+          <Routes>
+            <Route path="/" element={<DashboardView />} />
+            <Route path="/history" element={<HistoryView />} />
+            <Route path="/projects" element={<MyProjectsView />} />
+            <Route path="/favorites" element={<FavoritesView />} />
+            <Route path="/profile" element={<MyProfileView />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
       </main>
     </div>
   );
