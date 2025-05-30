@@ -1,192 +1,473 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getCommunity, joinCommunity, leaveCommunity, isCommunityMember } from '../services/community';
-import type { Community } from '../types/community';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import {
+  getCommunity,
+  isCommunityMember,
+  joinCommunity,
+  leaveCommunity,
+  getUserCommunityRole
+} from '../services/community';
+import {
+  getCommunityDiscussions,
+  createDiscussion,
+  getDiscussionResponses,
+  addResponse
+} from '../services/discussion';
+import { getUserProfile } from '../services/userProfile';
+import BaseModal from '../components/BaseModal';
+import type { Community, Discussion, DiscussionType, Response } from '../types/community';
 
 export default function CommunityView() {
   const { communityId } = useParams<{ communityId: string }>();
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: userLoading } = useAuth();
   const [community, setCommunity] = useState<Community | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isMember, setIsMember] = useState(false);
-  const [joinLoading, setJoinLoading] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
+  const [discussions, setDiscussions] = useState<Discussion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [selectedDiscussion, setSelectedDiscussion] = useState<Discussion | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [responses, setResponses] = useState<Response[]>([]);
+  const [responsesLoading, setResponsesLoading] = useState(false);
+  const [responsesError, setResponsesError] = useState<string | null>(null);
+  const [newComment, setNewComment] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [authorProfiles, setAuthorProfiles] = useState<Record<string, { displayName: string, photoURL?: string }>>({});
+
+  // Formulario para crear post
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [type, setType] = useState<DiscussionType>('question');
+  const [attachment, setAttachment] = useState<File | null>(null);
 
   useEffect(() => {
-    // Si no está autenticado o no hay ID de comunidad, redirigir a login
-    if (!user || !communityId) {
-      navigate('/login', { state: { from: `/communities/${communityId || ''}` } });
-      return;
-    }
-
-    async function loadCommunityData(cid: string, uid: string) {
+    if (!communityId) return;
+    setLoading(true);
+    (async () => {
       try {
-        const [communityData, membershipStatus] = await Promise.all([
-          getCommunity(cid),
-          isCommunityMember(cid, uid)
-        ]);
-
-        if (!communityData) {
-          setError('Comunidad no encontrada');
-          return;
+        const comm = await getCommunity(communityId);
+        setCommunity(comm);
+        if (user) {
+          const member = await isCommunityMember(communityId, user.uid);
+          setIsMember(member);
+          const userRole = await getUserCommunityRole(communityId, user.uid);
+          setRole(userRole);
+        } else {
+          setIsMember(false);
+          setRole(null);
         }
-
-        setCommunity(communityData);
-        setIsMember(membershipStatus);
-      } catch (err) {
-        console.error('Error loading community:', err);
-        setError('Error al cargar la comunidad');
+        const disc = await getCommunityDiscussions(communityId, 20);
+        setDiscussions(disc);
+      } catch (e) {
+        setError('No se pudo cargar la comunidad');
       } finally {
         setLoading(false);
       }
-    }
+    })();
+  }, [communityId, user]);
 
-    loadCommunityData(communityId, user.uid);
-  }, [communityId, user, navigate]);
-
-  const handleJoinLeave = async () => {
-    if (!user || !communityId || !community) return;
-
-    setJoinLoading(true);
+  const handleJoin = async () => {
+    if (!user || !communityId) return;
+    setActionLoading(true);
     try {
-      if (isMember) {
-        await leaveCommunity(communityId, user.uid);
-        setIsMember(false);
-        setCommunity(prev => prev ? {
-          ...prev,
-          memberCount: Math.max(0, prev.memberCount - 1)
-        } : null);
-      } else {
-        await joinCommunity(communityId, user.uid);
-        setIsMember(true);
-        setCommunity(prev => prev ? {
-          ...prev,
-          memberCount: prev.memberCount + 1
-        } : null);
-      }
-    } catch (err) {
-      console.error('Error al unirse/abandonar la comunidad:', err);
+      await joinCommunity(communityId, user.uid);
+      setIsMember(true);
+      setRole('member');
+    } catch (e: any) {
+      setError(e.message || 'Error al unirse');
     } finally {
-      setJoinLoading(false);
+      setActionLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-[3px] border-current border-t-transparent text-indigo-600 dark:text-indigo-400" />
-      </div>
-    );
-  }
+  const handleLeave = async () => {
+    if (!user || !communityId) return;
+    setActionLoading(true);
+    try {
+      await leaveCommunity(communityId, user.uid);
+      setIsMember(false);
+      setRole(null);
+    } catch (e: any) {
+      setError(e.message || 'Error al dejar la comunidad');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen px-4">
-        <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-4">
-          {error}
-        </h2>
-        <button
-          onClick={() => navigate('/communities')}
-          className="text-indigo-600 dark:text-indigo-400 hover:underline"
-        >
-          Volver a comunidades
-        </button>
-      </div>
-    );
-  }
+  const handleCreateDiscussion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !communityId) return;
+    setCreating(true);
+    setError(null);
+    try {
+      await createDiscussion(
+        communityId,
+        title,
+        content,
+        user.uid,
+        type,
+        [] // No tags
+      );
+      setModalOpen(false);
+      setTitle('');
+      setContent('');
+      setType('question');
+      setAttachment(null);
+      // Recargar discusiones
+      const disc = await getCommunityDiscussions(communityId, 20);
+      setDiscussions(disc);
+    } catch (e: any) {
+      setError(e.message || 'Error al crear publicación');
+    } finally {
+      setCreating(false);
+    }
+  };
 
-  if (!community) {
-    return null;
-  }
+  // Permitir crear publicación si es miembro o owner
+  const canCreate = isMember || (user && community && community.creatorId === user.uid);
+
+  // Cargar respuestas cuando se abre el modal de detalle
+  useEffect(() => {
+    if (!detailModalOpen || !selectedDiscussion || !communityId) return;
+    setResponsesLoading(true);
+    setResponsesError(null);
+    (async () => {
+      try {
+        const res = await getDiscussionResponses(communityId, selectedDiscussion.id, 50);
+        setResponses(res);
+      } catch (e) {
+        setResponsesError('No se pudieron cargar los comentarios');
+      } finally {
+        setResponsesLoading(false);
+      }
+    })();
+  }, [detailModalOpen, selectedDiscussion, communityId]);
+
+  // Manejar envío de comentario
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !communityId || !selectedDiscussion || !newComment.trim()) return;
+    setCommentLoading(true);
+    try {
+      await addResponse(communityId, selectedDiscussion.id, newComment, user.uid);
+      setNewComment('');
+      // Recargar respuestas
+      const res = await getDiscussionResponses(communityId, selectedDiscussion.id, 50);
+      setResponses(res);
+    } catch (e) {
+      setResponsesError('No se pudo enviar el comentario');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  // Cargar perfiles de autores de discusiones al cargar discusiones
+  useEffect(() => {
+    if (!communityId) return;
+    (async () => {
+      const authorIds = Array.from(new Set(discussions.map(d => d.authorId)));
+      const profiles: Record<string, { displayName: string, photoURL?: string }> = {};
+      await Promise.all(authorIds.map(async (uid) => {
+        if (!uid) return;
+        try {
+          const prof = await getUserProfile(uid);
+          if (prof) profiles[uid] = { displayName: prof.displayName, photoURL: prof.photoURL };
+        } catch {}
+      }));
+      setAuthorProfiles(profiles);
+    })();
+  }, [discussions, communityId]);
+
+  // Cargar perfiles de autores de respuestas al abrir modal de detalle
+  useEffect(() => {
+    if (!detailModalOpen || !selectedDiscussion || !communityId) return;
+    (async () => {
+      const authorIds = Array.from(new Set(responses.map(r => r.authorId)));
+      const profiles: Record<string, { displayName: string, photoURL?: string }> = { ...authorProfiles };
+      await Promise.all(authorIds.map(async (uid) => {
+        if (!uid || profiles[uid]) return;
+        try {
+          const prof = await getUserProfile(uid);
+          if (prof) profiles[uid] = { displayName: prof.displayName, photoURL: prof.photoURL };
+        } catch {}
+      }));
+      setAuthorProfiles(profiles);
+    })();
+  }, [responses, detailModalOpen, selectedDiscussion, communityId]);
+
+  if (loading || userLoading) return <div className="p-8">Cargando...</div>;
+  if (error) return <div className="p-8 text-red-500">{error}</div>;
+  if (!community) return <div className="p-8">Comunidad no encontrada</div>;
+
+  const isOwner = user && community.creatorId === user.uid;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Encabezado de la comunidad */}
-        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
-                {community.name}
-              </h1>
-              <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-                {community.description}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {community.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
+    <div className="w-full min-h-screen flex flex-col items-center bg-zinc-50 dark:bg-zinc-900 py-8 px-2">
+      {/* Header minimalista */}
+      <div className="w-full max-w-2xl flex flex-col items-center mb-4 mt-12">
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-zinc-900 dark:text-white text-center flex-1">{community.name}</h1>
+          {/* Botón seguir/dejar de seguir */}
+          {!isOwner && user && (
+            isMember ? (
+              <button
+                className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow min-w-[120px]"
+                onClick={handleLeave}
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Cargando...' : 'Dejar de seguir'}
+              </button>
+            ) : (
+              <button
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-semibold shadow min-w-[120px]"
+                onClick={handleJoin}
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Cargando...' : 'Seguir'}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+
+      {/* Reglas de la comunidad */}
+      {community.rules && community.rules.length > 0 && (
+        <div className="w-full max-w-2xl bg-white dark:bg-zinc-800 rounded-xl shadow p-5 border border-zinc-200 dark:border-zinc-700 mb-4">
+          <h2 className="text-lg font-bold mb-2 text-indigo-600 dark:text-indigo-400">Reglas de la comunidad</h2>
+          <ul className="list-disc pl-6 text-zinc-700 dark:text-zinc-300 space-y-1">
+            {community.rules.map((rule, idx) => (
+              <li key={idx}>{rule}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Modal para crear publicación */}
+      <BaseModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Crear publicación"
+        footerContent={
+          <>
             <button
-              onClick={handleJoinLeave}
-              disabled={joinLoading}
-              className={`px-4 py-2 rounded-xl font-medium text-sm transition-colors ${
-                isMember
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50'
-                  : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50'
-              }`}
+              className="bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-white px-4 py-2 rounded-lg"
+              onClick={() => setModalOpen(false)}
+              disabled={creating}
             >
-              {joinLoading ? (
-                <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-              ) : isMember ? (
-                'Abandonar comunidad'
-              ) : (
-                'Unirse a la comunidad'
-              )}
+              Cancelar
             </button>
+            <button
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold"
+              type="submit"
+              form="create-discussion-form"
+              disabled={creating}
+            >
+              {creating ? 'Creando...' : 'Publicar'}
+            </button>
+          </>
+        }
+      >
+        <form id="create-discussion-form" onSubmit={handleCreateDiscussion} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Título</label>
+            <input
+              type="text"
+              className="w-full px-3 py-2 border rounded-lg bg-zinc-100 dark:bg-zinc-800"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              required
+            />
           </div>
-        </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Contenido</label>
+            <textarea
+              className="w-full px-3 py-2 border rounded-lg bg-zinc-100 dark:bg-zinc-800"
+              value={content}
+              onChange={e => setContent(e.target.value)}
+              rows={4}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Tipo</label>
+            <select
+              className="w-full px-3 py-2 border rounded-lg bg-zinc-100 dark:bg-zinc-800"
+              value={type}
+              onChange={e => setType(e.target.value as DiscussionType)}
+            >
+              <option value="question">Pregunta</option>
+              <option value="resource">Recurso</option>
+              <option value="debate">Debate</option>
+              <option value="announcement">Anuncio</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Adjuntar archivo (imagen o PDF, opcional)</label>
+            <label className="flex items-center gap-3 cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold w-fit">
+              <span>Seleccionar archivo</span>
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                className="hidden"
+                onChange={e => setAttachment(e.target.files?.[0] || null)}
+              />
+            </label>
+            {attachment && <div className="mt-2 text-xs text-zinc-500">Archivo seleccionado: {attachment.name}</div>}
+          </div>
+        </form>
+        {error && <div className="text-red-500 mt-2">{error}</div>}
+      </BaseModal>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-4">
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">Miembros</div>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white">
-              {community.memberCount}
-            </div>
-          </div>
-          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-4">
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">Categoría</div>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white">
-              {community.category}
-            </div>
-          </div>
-          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-4">
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">Estado</div>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white">
-              {community.status === 'active' ? 'Activa' : 'Archivada'}
-            </div>
-          </div>
+      {/* Lista de publicaciones/discusiones */}
+      <div className="w-full max-w-2xl bg-white dark:bg-zinc-800 rounded-xl shadow p-6 border border-zinc-200 dark:border-zinc-700 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Publicaciones recientes</h2>
+          {canCreate && (
+            <button
+              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg font-semibold shadow"
+              onClick={() => setModalOpen(true)}
+            >
+              Crear publicación
+            </button>
+          )}
         </div>
-
-        {/* Reglas de la comunidad */}
-        {community.rules.length > 0 && (
-          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">
-              Reglas de la comunidad
-            </h2>
-            <ul className="space-y-2">
-              {community.rules.map((rule, index) => (
-                <li
-                  key={index}
-                  className="flex items-start gap-2 text-zinc-600 dark:text-zinc-400"
-                >
-                  <span className="font-medium">{index + 1}.</span>
-                  <span>{rule}</span>
-                </li>
-              ))}
-            </ul>
+        {discussions.length === 0 ? (
+          <div className="text-zinc-500">Aún no hay publicaciones en esta comunidad.</div>
+        ) : (
+          <div className="space-y-4">
+            {discussions.map(disc => (
+              <div
+                key={disc.id}
+                className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-4 border border-zinc-100 dark:border-zinc-700 shadow-sm cursor-pointer hover:ring-2 hover:ring-indigo-400 transition"
+                onClick={() => { setSelectedDiscussion(disc); setDetailModalOpen(true); }}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full font-medium">
+                    {disc.type}
+                  </span>
+                  <span className="text-xs text-zinc-400">{new Date(disc.createdAt).toLocaleString()}</span>
+                  {authorProfiles[disc.authorId] && (
+                    <span className="flex items-center gap-1 ml-2">
+                      <img src={authorProfiles[disc.authorId].photoURL || '/default-avatar.png'} alt="avatar" className="w-5 h-5 rounded-full object-cover" />
+                      <span className="text-xs text-zinc-700 dark:text-zinc-200 font-medium">{authorProfiles[disc.authorId].displayName}</span>
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-base font-semibold mb-1 text-zinc-900 dark:text-white">{disc.title}</h3>
+                <div className="text-sm text-zinc-600 dark:text-zinc-300 mb-1 line-clamp-3">{disc.content}</div>
+                {/* Tags eliminados */}
+                <div className="flex items-center gap-4 text-xs text-zinc-500 mt-1">
+                  <span>👍 {disc.upvotes}</span>
+                  <span>💬 {disc.responseCount}</span>
+                  <span>👁️ {disc.views}</span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
+
+      {/* Modal de detalle de publicación */}
+      <BaseModal
+        isOpen={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        title={selectedDiscussion?.title || ''}
+      >
+        {selectedDiscussion && (
+          <div>
+            {/* Botón de cerrar (X) en la esquina superior derecha */}
+            <button
+              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700 dark:hover:text-white text-xl font-bold focus:outline-none"
+              onClick={() => setDetailModalOpen(false)}
+              aria-label="Cerrar"
+              type="button"
+            >
+              ×
+            </button>
+            {/* Info del autor de la publicación */}
+            <div className="flex items-center gap-2 mb-2 mt-2">
+              <span className="text-xs px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full font-medium">
+                {selectedDiscussion.type}
+              </span>
+              <span className="text-xs text-zinc-400">{new Date(selectedDiscussion.createdAt).toLocaleString()}</span>
+              {authorProfiles[selectedDiscussion.authorId] && (
+                <span className="flex items-center gap-1 ml-2">
+                  <img src={authorProfiles[selectedDiscussion.authorId].photoURL || '/default-avatar.png'} alt="avatar" className="w-5 h-5 rounded-full object-cover" />
+                  <span className="text-xs text-zinc-700 dark:text-zinc-200 font-medium">{authorProfiles[selectedDiscussion.authorId].displayName}</span>
+                </span>
+              )}
+            </div>
+            <div className="text-base text-zinc-900 dark:text-white mb-2 font-semibold">{selectedDiscussion.title}</div>
+            <div className="text-sm text-zinc-600 dark:text-zinc-300 mb-4 whitespace-pre-line">{selectedDiscussion.content}</div>
+            <div className="text-xs text-zinc-500 mt-4 flex gap-4">
+              <span>👍 {selectedDiscussion.upvotes}</span>
+              <span>💬 {selectedDiscussion.responseCount}</span>
+              <span>👁️ {selectedDiscussion.views}</span>
+            </div>
+            {/* Comentarios/respuestas */}
+            <div className="mt-8">
+              <h3 className="text-lg font-bold mb-3 text-indigo-600 dark:text-indigo-400">Comentarios</h3>
+              {responsesLoading ? (
+                <div className="text-zinc-500">Cargando comentarios...</div>
+              ) : responsesError ? (
+                <div className="text-red-500">{responsesError}</div>
+              ) : responses.length === 0 ? (
+                <div className="text-zinc-500">Aún no hay comentarios.</div>
+              ) : (
+                <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
+                  {responses.map(resp => (
+                    <div key={resp.id} className="bg-zinc-100 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-700">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-zinc-500">{new Date(resp.createdAt).toLocaleString()}</span>
+                        {authorProfiles[resp.authorId] && (
+                          <span className="flex items-center gap-1 ml-2">
+                            <img src={authorProfiles[resp.authorId].photoURL || '/default-avatar.png'} alt="avatar" className="w-5 h-5 rounded-full object-cover" />
+                            <span className="text-xs text-zinc-700 dark:text-zinc-200 font-medium">{authorProfiles[resp.authorId].displayName}</span>
+                          </span>
+                        )}
+                        {resp.isAccepted && <span className="text-xs text-green-600 font-bold ml-2">✔ Respuesta aceptada</span>}
+                      </div>
+                      <div className="text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-line">{resp.content}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Caja para comentar */}
+              {user ? (
+                isMember ? (
+                  <form onSubmit={handleAddComment} className="mt-6 flex gap-2 items-end">
+                    <textarea
+                      className="flex-1 px-3 py-2 border rounded-lg bg-zinc-100 dark:bg-zinc-800 text-sm resize-none"
+                      rows={2}
+                      placeholder="Escribe un comentario..."
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      disabled={commentLoading}
+                      maxLength={500}
+                    />
+                    <button
+                      type="submit"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold"
+                      disabled={commentLoading || !newComment.trim()}
+                    >
+                      {commentLoading ? 'Enviando...' : 'Comentar'}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="mt-6 text-zinc-500 text-sm">Sigue la comunidad para poder comentar.</div>
+                )
+              ) : (
+                <div className="mt-6 text-zinc-500 text-sm">Inicia sesión para comentar.</div>
+              )}
+            </div>
+          </div>
+        )}
+      </BaseModal>
     </div>
   );
-} 
+}

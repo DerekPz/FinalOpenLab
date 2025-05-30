@@ -6,6 +6,8 @@ import HistoryView from './HistoryView';
 import MyProjectsView from './MyProjectsView';
 import MyProfileView from './MyProfileView';
 import FavoritesView from './FavoritesView';
+import MyCommunitiesView from './MyCommunitiesView';
+import AdminCommunityView from './AdminCommunityView';
 
 export default function PortalLayout() {
   const [isMobile, setIsMobile] = useState(false);
@@ -58,6 +60,8 @@ export default function PortalLayout() {
             <Route path="/projects" element={<MyProjectsView />} />
             <Route path="/favorites" element={<FavoritesView />} />
             <Route path="/profile" element={<MyProfileView />} />
+            <Route path="communities" element={<MyCommunitiesView />} />
+            <Route path="communities/:communityId/admin" element={<AdminCommunityView />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

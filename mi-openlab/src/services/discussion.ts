@@ -134,16 +134,17 @@ export async function addResponse(
   parentResponseId?: string
 ): Promise<string> {
   try {
+    // Solo incluir parentResponseId si tiene valor
     const responseData: Omit<FirestoreResponse, 'id'> = {
       discussionId,
       content,
       authorId,
-      parentResponseId,
       upvotes: 0,
       downvotes: 0,
       isAccepted: false,
       createdAt: serverTimestamp() as Timestamp,
-      updatedAt: serverTimestamp() as Timestamp
+      updatedAt: serverTimestamp() as Timestamp,
+      ...(parentResponseId ? { parentResponseId } : {})
     };
 
     const responseRef = await addDoc(

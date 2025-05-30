@@ -1,5 +1,5 @@
 import { useState, useContext, createContext, useEffect } from 'react';
-import { Menu, X, LayoutDashboard, Clock3, Folder, User, ArrowLeftCircle, Sun, Moon, Star, LogOut } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Clock3, Folder, User, ArrowLeftCircle, Sun, Moon, Star, LogOut, Users } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDarkMode } from '../../../hooks/useDarkMode';
@@ -22,6 +22,7 @@ export default function Sidebar() {
     { icon: <Folder size={20} />, label: 'Mis proyectos', path: '/portal/projects' },
     { icon: <Star size={20} />, label: 'Favoritos', path: '/portal/favorites' },
     { icon: <User size={20} />, label: 'Tu Perfil', path: '/portal/profile' },
+    { icon: <Users size={20} />, label: 'Tus comunidades', path: '/portal/communities' },
   ];
 
   useEffect(() => {

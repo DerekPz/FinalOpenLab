@@ -275,4 +275,31 @@ export async function archiveCommunity(communityId: string): Promise<void> {
     console.error('Error archiving community:', error);
     throw error;
   }
+}
+
+export async function getCommunitiesByCreator(creatorId: string): Promise<Community[]> {
+  const q = query(collection(db, "communities"), where("creatorId", "==", creatorId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    ...(doc.data() as Community),
+    id: doc.id,
+    createdAt: doc.data().createdAt?.toDate() || new Date(),
+  }));
+}
+
+export async function getCommunityMembers(communityId: string): Promise<CommunityMember[]> {
+  const membersRef = collection(db, `communities/${communityId}/members`);
+  const snapshot = await getDocs(membersRef);
+  return snapshot.docs.map(doc => doc.data() as CommunityMember);
+}
+
+export async function removeCommunityMember(communityId: string, userId: string) {
+  await deleteDoc(doc(db, `communities/${communityId}/members/${userId}`));
+}
+
+export async function getUserProfile(userId: string) {
+  const userRef = doc(db, "userProfiles", userId);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) return null;
+  return userSnap.data();
 } 

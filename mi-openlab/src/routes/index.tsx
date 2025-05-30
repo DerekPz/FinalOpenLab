@@ -15,9 +15,11 @@ import FavoritesView from '../pages/portal/FavoritesView';
 import Home from '../pages/Home';
 import Communities from '../pages/Communities';
 import CreateCommunity from '../pages/CreateCommunity';
-import CommunityView from '../pages/CommunityView';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Explore from '../pages/Explore';
+import CommunityDashboard from "../pages/portal/CommunityDashboard";
+import AdminCommunityView from '../pages/portal/AdminCommunityView';
+import CommunityView from '../pages/CommunityView';
 
 export default function AppRoutes() {
   return (
@@ -60,11 +62,9 @@ export default function AppRoutes() {
             </DefaultLayout>
           </ProtectedRoute>
         } />
-        <Route path="/communities/:communityId" element={
-          <DefaultLayout>
-            <CommunityView />
-          </DefaultLayout>
-        } />
+        <Route path="/dashboard/communities" element={<CommunityDashboard />} />
+        <Route path="/dashboard/community/:communityId" element={<AdminCommunityView />} />
+        <Route path="/communities/:communityId" element={<DefaultLayout><CommunityView /></DefaultLayout>} />
       </Routes>
     </BrowserRouter>
   );
