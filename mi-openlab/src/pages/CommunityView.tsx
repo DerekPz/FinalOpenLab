@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   getCommunity,
@@ -17,10 +17,13 @@ import {
 import { getUserProfile } from '../services/userProfile';
 import BaseModal from '../components/BaseModal';
 import type { Community, Discussion, DiscussionType, Response } from '../types/community';
+import { logUserActivity } from '../services/userActivity';
+import { ArrowLeft } from 'lucide-react';
 
 export default function CommunityView() {
   const { communityId } = useParams<{ communityId: string }>();
   const { user, loading: userLoading } = useAuth();
+  const navigate = useNavigate();
   const [community, setCommunity] = useState<Community | null>(null);
   const [isMember, setIsMember] = useState(false);
   const [role, setRole] = useState<string | null>(null);
@@ -121,6 +124,13 @@ export default function CommunityView() {
       // Recargar discusiones
       const disc = await getCommunityDiscussions(communityId, 20);
       setDiscussions(disc);
+      await logUserActivity(
+        user.uid,
+        'create_discussion',
+        `Publicaste en la comunidad "${community?.name}"`,
+        communityId,
+        { title }
+      );
     } catch (e: any) {
       setError(e.message || 'Error al crear publicación');
     } finally {
@@ -211,7 +221,9 @@ export default function CommunityView() {
       {/* Header minimalista */}
       <div className="w-full max-w-2xl flex flex-col items-center mb-4 mt-12">
         <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-zinc-900 dark:text-white text-center flex-1">{community.name}</h1>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 text-center flex-1">
+            {community.name}
+          </h1>
           {/* Botón seguir/dejar de seguir */}
           {!isOwner && user && (
             isMember ? (
@@ -468,6 +480,27 @@ export default function CommunityView() {
           </div>
         )}
       </BaseModal>
+
+      {/* Botón flotante de volver a Comunidades */}
+      <button
+        onClick={() => navigate('/communities')}
+        className="fixed bottom-20 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-zinc-900/90 text-white dark:bg-zinc-800/90 dark:text-zinc-100 rounded-full shadow-lg hover:bg-zinc-800 dark:hover:bg-zinc-700 transition-all backdrop-blur-md"
+        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+        aria-label="Volver a Comunidades"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="font-medium hidden sm:inline">Volver a Comunidades</span>
+      </button>
+      {/* Botón flotante de ir a Explorar */}
+      <button
+        onClick={() => navigate('/explore')}
+        className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-zinc-900/90 text-white dark:bg-zinc-800/90 dark:text-zinc-100 rounded-full shadow-lg hover:bg-zinc-800 dark:hover:bg-zinc-700 transition-all backdrop-blur-md"
+        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+        aria-label="Ir a Explorar"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="font-medium hidden sm:inline">Ir a Explorar</span>
+      </button>
     </div>
   );
 }

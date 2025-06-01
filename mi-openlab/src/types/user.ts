@@ -1,4 +1,5 @@
 import type { Project } from '../data/types';
+export type { Project };
 
 export interface TechStack {
   name: string;

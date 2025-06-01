@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getUserRanking, ACHIEVEMENTS } from '../services/reputation';
 import type { UserProfile } from '../types/user';
-import { Trophy, Medal, Award, Star, ThumbsUp, MessageSquare, Users, Info, Rocket, Group, Heart, Crown, MessageCircle } from 'lucide-react';
+import { Trophy, Medal, Award, Star, ThumbsUp, MessageSquare, Users, Info, Rocket, Group, Heart, Crown, MessageCircle, ArrowLeft } from 'lucide-react';
 import RankingUserCard from '../components/RankingUserCard';
+import { useNavigate } from 'react-router-dom';
 
 export default function Ranking() {
   const [users, setUsers] = useState<(UserProfile & { rank: number })[]>([]);
@@ -11,6 +12,7 @@ export default function Ranking() {
   const [showInfo, setShowInfo] = useState(false);
   const [tooltipAchievement, setTooltipAchievement] = useState<string | null>(null);
   const [tooltipPoint, setTooltipPoint] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadRanking = async () => {
@@ -95,6 +97,16 @@ export default function Ranking() {
 
   return (
     <div className="min-h-screen w-full bg-zinc-50/80 dark:bg-zinc-900">
+      {/* Botón flotante de volver a Explore */}
+      <button
+        onClick={() => navigate('/explore')}
+        className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-zinc-900/90 text-white dark:bg-zinc-800/90 dark:text-zinc-100 rounded-full shadow-lg hover:bg-zinc-800 dark:hover:bg-zinc-700 transition-all backdrop-blur-md"
+        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+        aria-label="Volver a Explorar"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="font-medium hidden sm:inline">Volver a Explorar</span>
+      </button>
       <div className="w-full max-w-[2000px] mx-auto px-4 py-6 sm:py-10 sm:px-6 lg:px-8">
         {/* Header con título y descripción */}
         <div className="pt-16 sm:pt-20 pb-8 sm:pb-12 text-center space-y-2">

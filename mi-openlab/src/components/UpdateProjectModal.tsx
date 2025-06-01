@@ -6,6 +6,7 @@ import type { Project } from '../data/types'; // Asegúrate de que la ruta sea c
 import { db } from '../services/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { uploadImage } from '../services/upload';
+import { logUserActivity } from '../services/userActivity';
 
 import BaseModal from './BaseModal'; // Importa el BaseModal
 
@@ -83,6 +84,13 @@ export default function UpdateProjectModal({ isOpen, onClose, onProjectUpdated, 
         // Asegúrate de que las tags se conviertan a array antes de guardar en Firestore
         tags: data.tags.split(',').map((tag: string) => tag.trim()),
       });
+
+      await logUserActivity(
+        project.userId,
+        'edit_project',
+        `Editaste el proyecto "${data.title}"`,
+        project.id
+      );
 
       // Limpiar estados y formulario después del éxito
       reset();

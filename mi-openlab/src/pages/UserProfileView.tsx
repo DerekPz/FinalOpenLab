@@ -425,6 +425,17 @@ export default function UserProfileView() {
           user={user || undefined}
         />
       )}
+
+      {/* Botón flotante de volver */}
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-zinc-900/90 text-white dark:bg-zinc-800/90 dark:text-zinc-100 rounded-full shadow-lg hover:bg-zinc-800 dark:hover:bg-zinc-700 transition-all backdrop-blur-md"
+        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+        aria-label="Volver"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="font-medium hidden sm:inline">Volver</span>
+      </button>
     </div>
   );
 } 

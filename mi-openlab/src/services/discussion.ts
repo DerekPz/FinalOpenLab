@@ -21,6 +21,7 @@ import type {
   FirestoreDiscussion,
   FirestoreResponse
 } from '../types/community';
+import { logUserActivity } from './userActivity';
 
 // Crear una nueva discusión
 export async function createDiscussion(
@@ -51,6 +52,14 @@ export async function createDiscussion(
     const discussionRef = await addDoc(
       collection(db, 'communities', communityId, 'discussions'),
       discussionData
+    );
+
+    // Registrar actividad de creación de discusión
+    await logUserActivity(
+      authorId,
+      'create_discussion',
+      `Publicaste la discusión "${title}"`,
+      discussionRef.id
     );
 
     return discussionRef.id;
@@ -160,6 +169,16 @@ export async function addResponse(
       }
     );
 
+    // Obtener el título de la discusión para la descripción
+    const discussionDoc = await getDoc(doc(db, 'communities', communityId, 'discussions', discussionId));
+    const discussionTitle = discussionDoc.exists() ? discussionDoc.data().title : '';
+
+    await logUserActivity(
+      authorId,
+      'comment',
+      `Comentaste en la discusión "${discussionTitle}"`,
+      discussionId
+    );
     return responseRef.id;
   } catch (error) {
     console.error('Error adding response:', error);

@@ -31,4 +31,7 @@ yarn-error.log*
 
 # Misc
 coverage/
-*.local 
+*.local
+
+# Migration config
+src/utils/firebase.migrate.config.ts 

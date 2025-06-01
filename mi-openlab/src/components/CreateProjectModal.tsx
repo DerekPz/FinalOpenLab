@@ -6,6 +6,7 @@ import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { uploadImage } from '../services/upload';
 import { db } from '../services/firebase';
+import { logUserActivity } from '../services/userActivity';
 
 import BaseModal from './BaseModal'; // Importa el BaseModal
 
@@ -43,7 +44,8 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         uploadedImageUrl = await uploadImage(imageFile, user.uid);
       }
 
-      await addDoc(collection(db, 'projects'), {
+      const projectRef = collection(db, 'projects');
+      const docRef = await addDoc(projectRef, {
         ...data,
         imageUrl: uploadedImageUrl,
         tags: data.tags.split(',').map(tag => tag.trim()),
@@ -65,6 +67,12 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
       setImageFile(null);
       onClose(); // Cerrar el modal
       onProjectCreated(); // Callback para notificar que se creó
+      await logUserActivity(
+        user.uid,
+        'create_project',
+        `Creaste el proyecto "${data.title}"`,
+        docRef.id
+      );
     } catch (err) {
       console.error('Error al crear el proyecto:', err);
     } finally {

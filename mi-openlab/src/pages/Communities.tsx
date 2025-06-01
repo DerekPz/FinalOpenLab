@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Filter } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, Search, Filter, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getCommunities } from '../services/community';
 import type { Community, CommunityCategory } from '../types/community';
@@ -21,6 +21,7 @@ const CATEGORIES: CommunityCategory[] = [
 
 export default function Communities() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -54,6 +55,16 @@ export default function Communities() {
 
   return (
     <div className="min-h-screen w-full bg-zinc-50/80 dark:bg-zinc-900">
+      {/* Botón flotante de volver a Explore */}
+      <button
+        onClick={() => navigate('/explore')}
+        className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-zinc-900/90 text-white dark:bg-zinc-800/90 dark:text-zinc-100 rounded-full shadow-lg hover:bg-zinc-800 dark:hover:bg-zinc-700 transition-all backdrop-blur-md"
+        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+        aria-label="Volver a Explorar"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="font-medium hidden sm:inline">Volver a Explorar</span>
+      </button>
       <div className="w-full max-w-[2000px] mx-auto px-4 py-6 sm:py-10 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="pt-16 sm:pt-20 pb-8 sm:pb-12">

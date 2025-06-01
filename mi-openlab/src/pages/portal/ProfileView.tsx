@@ -4,11 +4,14 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import type { UserProfile } from '../../types/user';
 import UserAchievements from '../../components/profile/UserAchievements';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 export default function ProfileView() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -49,9 +52,17 @@ export default function ProfileView() {
 
   return (
     <div className="space-y-6">
+      {/* Botón de volver */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 px-4 py-2 mb-4 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg text-zinc-700 dark:text-zinc-200 font-medium shadow transition"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Volver
+      </button>
       {/* Información básica del perfil */}
-      <div className="bg-white dark:bg-zinc-800/50 backdrop-blur-sm rounded-xl p-6 border border-zinc-200 dark:border-zinc-700/50">
-        <div className="flex items-center gap-4">
+      <div className="bg-white dark:bg-zinc-800/50 backdrop-blur-sm rounded-xl p-6 border border-zinc-200 dark:border-zinc-700/50 text-center">
+        <div className="flex flex-col items-center gap-4">
           <div className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-indigo-500/50 shadow-xl">
             <img
               src={profile.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.displayName)}&background=random`}
@@ -80,11 +91,11 @@ export default function ProfileView() {
 
       {/* Enlaces y redes sociales */}
       {(profile.linkedInUrl || profile.githubUrl || profile.websiteUrl) && (
-        <div className="bg-white dark:bg-zinc-800/50 backdrop-blur-sm rounded-xl p-6 border border-zinc-200 dark:border-zinc-700/50">
+        <div className="bg-white dark:bg-zinc-800/50 backdrop-blur-sm rounded-xl p-6 border border-zinc-200 dark:border-zinc-700/50 text-center">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-4">
             Enlaces
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-3 flex flex-col items-center">
             {profile.linkedInUrl && (
               <a
                 href={profile.linkedInUrl}

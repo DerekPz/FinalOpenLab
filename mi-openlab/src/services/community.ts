@@ -26,6 +26,7 @@ import type {
   CommunityRole,
   CommunityCategory
 } from '../types/community';
+import { logUserActivity } from '../services/userActivity';
 
 // Crear una nueva comunidad
 export async function createCommunity(
@@ -101,8 +102,11 @@ export async function getCommunities(
     const communitiesRef = collection(db, 'communities');
     let queryRef: Query<DocumentData>;
     
-    // Simplificar la consulta para probar
-    queryRef = query(communitiesRef);
+    if (category) {
+      queryRef = query(communitiesRef, where('category', '==', category));
+    } else {
+      queryRef = query(communitiesRef);
+    }
 
     const snapshot = await getDocs(queryRef);
     
@@ -173,6 +177,16 @@ export async function joinCommunity(communityId: string, userId: string): Promis
         memberCount: increment(1)
       });
     });
+
+    // Obtener el nombre de la comunidad para el log
+    const commSnap = await getDoc(doc(db, 'communities', communityId));
+    const commName = commSnap.exists() ? commSnap.data().name : '';
+    await logUserActivity(
+      userId,
+      'join_community',
+      `Te uniste a la comunidad "${commName}"`,
+      communityId
+    );
   } catch (error) {
     console.error('Error joining community:', error);
     throw error;
@@ -213,6 +227,16 @@ export async function leaveCommunity(communityId: string, userId: string): Promi
         memberCount: increment(-1)
       });
     });
+
+    // Obtener el nombre de la comunidad para el log
+    const commSnap = await getDoc(doc(db, 'communities', communityId));
+    const commName = commSnap.exists() ? commSnap.data().name : '';
+    await logUserActivity(
+      userId,
+      'leave_community',
+      `Saliste de la comunidad "${commName}"`,
+      communityId
+    );
   } catch (error) {
     console.error('Error leaving community:', error);
     throw error;

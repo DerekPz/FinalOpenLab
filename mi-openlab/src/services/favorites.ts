@@ -11,6 +11,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import type { Project } from '../data/types';
+import { logUserActivity } from './userActivity';
 
 // Función para marcar un proyecto como favorito
 export async function addFavorite(userId: string, projectId: string): Promise<void> {
@@ -19,6 +20,7 @@ export async function addFavorite(userId: string, projectId: string): Promise<vo
     await setDoc(favoriteDoc, {
       timestamp: new Date()
     });
+    await logUserActivity(userId, 'favorite', `Marcaste como favorito el proyecto con ID ${projectId}`, projectId);
   } catch (error) {
     console.error('Error adding favorite:', error);
     throw error;

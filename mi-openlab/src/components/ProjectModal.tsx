@@ -11,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { User } from 'firebase/auth';
 import type { FirebaseTimestamp } from '../types/comment';
+import { logUserActivity } from '../services/userActivity';
 
 interface ProjectModalProps {
   open: boolean;
@@ -181,6 +182,13 @@ export default function ProjectModal({ open, onClose, project, user }: ProjectMo
         comment: newComment.trim(),
         createdAt: Timestamp.now(),
       });
+      // Registrar actividad de comentario en el historial
+      await logUserActivity(
+        user.uid,
+        'comment',
+        `Comentaste en el proyecto "${project.title}"`,
+        project.id
+      );
       
       setNewComment('');
     } catch (error) {
