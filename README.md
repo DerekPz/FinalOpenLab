@@ -122,4 +122,6 @@ El proyecto implementa reglas de seguridad en Firestore y Storage para proteger 
 
 ## 📞 Contacto
 
-[Información de contacto del equipo]
+derekp@uninorte.edu.co
+lsolaez@uninorte.edu.co
+hsuarez@uninorte.edu.co
