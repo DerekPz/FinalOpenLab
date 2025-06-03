@@ -12,6 +12,8 @@ import { es } from 'date-fns/locale';
 import type { User } from 'firebase/auth';
 import type { FirebaseTimestamp } from '../types/comment';
 import { logUserActivity } from '../services/userActivity';
+import { updateReputation } from '../services/reputation';
+
 
 interface ProjectModalProps {
   open: boolean;
@@ -189,7 +191,9 @@ export default function ProjectModal({ open, onClose, project, user }: ProjectMo
         `Comentaste en el proyecto "${project.title}"`,
         project.id
       );
-      
+      if (project.userId !== user.uid) {
+        await updateReputation(project.userId, 'comment_received', project.id);
+      }
       setNewComment('');
     } catch (error) {
       console.error('Error al guardar el comentario:', error);
