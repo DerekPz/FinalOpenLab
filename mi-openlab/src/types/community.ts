@@ -50,6 +50,7 @@ export interface Discussion {
   responseCount: number;
   acceptedResponseId?: string;
   views: number;
+  attachmentUrl?: string;
 }
 
 export interface Response {

@@ -19,6 +19,7 @@ import BaseModal from '../components/BaseModal';
 import type { Community, Discussion, DiscussionType, Response } from '../types/community';
 import { logUserActivity } from '../services/userActivity';
 import { ArrowLeft } from 'lucide-react';
+import { uploadCommunityFile } from '../services/uploadCommunityFile';
 
 export default function CommunityView() {
   const { communityId } = useParams<{ communityId: string }>();
@@ -107,23 +108,42 @@ export default function CommunityView() {
     if (!user || !communityId) return;
     setCreating(true);
     setError(null);
+
     try {
+      let attachmentUrl: string | undefined;
+
+      // ✅ Subir archivo si existe
+      if (attachment) {
+        try {
+          attachmentUrl = await uploadCommunityFile(attachment, communityId);
+        } catch (err) {
+          console.error('Error subiendo archivo:', err);
+          setError('No se pudo subir el archivo adjunto.');
+          setCreating(false);
+          return;
+        }
+      }
+
+      // ✅ Crear publicación con archivo (si lo hay)
       await createDiscussion(
         communityId,
         title,
         content,
         user.uid,
         type,
-        [] // No tags
+        [],
+        attachmentUrl
       );
+
       setModalOpen(false);
       setTitle('');
       setContent('');
       setType('question');
       setAttachment(null);
-      // Recargar discusiones
+
       const disc = await getCommunityDiscussions(communityId, 20);
       setDiscussions(disc);
+
       await logUserActivity(
         user.uid,
         'create_discussion',
@@ -137,7 +157,6 @@ export default function CommunityView() {
       setCreating(false);
     }
   };
-
   // Permitir crear publicación si es miembro o owner
   const canCreate = isMember || (user && community && community.creatorId === user.uid);
 
@@ -187,7 +206,7 @@ export default function CommunityView() {
         try {
           const prof = await getUserProfile(uid);
           if (prof) profiles[uid] = { displayName: prof.displayName, photoURL: prof.photoURL };
-        } catch {}
+        } catch { }
       }));
       setAuthorProfiles(profiles);
     })();
@@ -204,7 +223,7 @@ export default function CommunityView() {
         try {
           const prof = await getUserProfile(uid);
           if (prof) profiles[uid] = { displayName: prof.displayName, photoURL: prof.photoURL };
-        } catch {}
+        } catch { }
       }));
       setAuthorProfiles(profiles);
     })();
@@ -372,6 +391,27 @@ export default function CommunityView() {
                 </div>
                 <h3 className="text-base font-semibold mb-1 text-zinc-900 dark:text-white">{disc.title}</h3>
                 <div className="text-sm text-zinc-600 dark:text-zinc-300 mb-1 line-clamp-3">{disc.content}</div>
+                {disc.attachmentUrl && (
+  <div className="mt-2">
+    {disc.attachmentUrl.endsWith('.pdf') ? (
+      <a
+        href={disc.attachmentUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center text-indigo-600 dark:text-indigo-400 text-sm underline"
+      >
+        📎 Ver archivo PDF adjunto
+      </a>
+    ) : (
+      <img
+        src={disc.attachmentUrl}
+        alt="Adjunto"
+        className="w-full max-h-48 object-cover rounded-lg border border-zinc-300 dark:border-zinc-600 mt-2"
+      />
+    )}
+  </div>
+)}
+
                 {/* Tags eliminados */}
                 <div className="flex items-center gap-4 text-xs text-zinc-500 mt-1">
                   <span>👍 {disc.upvotes}</span>
@@ -415,7 +455,16 @@ export default function CommunityView() {
               )}
             </div>
             <div className="text-base text-zinc-900 dark:text-white mb-2 font-semibold">{selectedDiscussion.title}</div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-300 mb-4 whitespace-pre-line">{selectedDiscussion.content}</div>
+            <div className="text-sm text-zinc-600 dark:text-zinc-300 mb-4 whitespace-pre-line">{selectedDiscussion.attachmentUrl && (
+              <a
+                href={selectedDiscussion.attachmentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mb-4 text-sm text-indigo-600 dark:text-indigo-400 underline"
+              >
+                📎 Ver archivo adjunto
+              </a>
+            )}</div>
             <div className="text-xs text-zinc-500 mt-4 flex gap-4">
               <span>👍 {selectedDiscussion.upvotes}</span>
               <span>💬 {selectedDiscussion.responseCount}</span>

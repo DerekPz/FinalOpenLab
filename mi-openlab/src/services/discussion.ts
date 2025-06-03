@@ -30,7 +30,8 @@ export async function createDiscussion(
   content: string,
   authorId: string,
   type: DiscussionType,
-  tags: string[] = []
+  tags: string[] = [],
+  attachmentUrl?: string
 ): Promise<string> {
   try {
     const discussionData: Omit<FirestoreDiscussion, 'id'> = {
@@ -46,8 +47,10 @@ export async function createDiscussion(
       responseCount: 0,
       views: 0,
       createdAt: serverTimestamp() as Timestamp,
-      updatedAt: serverTimestamp() as Timestamp
+      updatedAt: serverTimestamp() as Timestamp,
+      ...(attachmentUrl && { attachmentUrl }) // ✅ se incluye solo si existe
     };
+    
 
     const discussionRef = await addDoc(
       collection(db, 'communities', communityId, 'discussions'),
