@@ -17,7 +17,7 @@ export default function Ranking() {
   useEffect(() => {
     const loadRanking = async () => {
       try {
-        const ranking = await getUserRanking(20);
+        const ranking = await getUserRanking(20, false); // no autenticado
         console.log('Ranking loaded:', ranking);
         setUsers(ranking);
       } catch (error) {

@@ -141,7 +141,7 @@ async function checkAndAwardAchievements(userId: string) {
 }
 
 // Función para obtener el ranking de usuarios
-export async function getUserRanking(limitCount = 10) {
+export async function getUserRanking(limitCount = 10, isAuthenticated = false) {
   try {
     console.log('Fetching user ranking...');
     const usersRef = collection(db, 'userProfiles');
@@ -163,27 +163,24 @@ export async function getUserRanking(limitCount = 10) {
       return [];
     }
 
-    // Obtener todos los usuarios que actualmente tienen isTopRanked = true
-    const prevTopQuery = query(
-      usersRef,
-      where('isTopRanked', '==', true)
-    );
-    const prevTopSnapshot = await getDocs(prevTopQuery);
-
-    // Quitar la insignia de top a todos los usuarios que ya no están en el top
-    const batch = writeBatch(db);
-    prevTopSnapshot.docs.forEach(doc => {
-      // Solo quitar si no es el nuevo top 1
-      if (doc.id !== snapshot.docs[0].id) {
-        batch.update(doc.ref, { isTopRanked: false });
-      }
-    });
-
-    // Asignar la insignia al nuevo top 1
-    batch.update(doc(usersRef, snapshot.docs[0].id), { isTopRanked: true });
-
-    // Ejecutar todas las actualizaciones en una sola operación
-    await batch.commit();
+    if (isAuthenticated) {
+      const prevTopQuery = query(
+        usersRef,
+        where('isTopRanked', '==', true)
+      );
+      const prevTopSnapshot = await getDocs(prevTopQuery);
+    
+      const batch = writeBatch(db);
+      prevTopSnapshot.docs.forEach(doc => {
+        if (doc.id !== snapshot.docs[0].id) {
+          batch.update(doc.ref, { isTopRanked: false });
+        }
+      });
+    
+      batch.update(doc(usersRef, snapshot.docs[0].id), { isTopRanked: true });
+      await batch.commit();
+    }
+    
 
     // Obtener el conteo real de proyectos para cada usuario
     const usersWithProjects = await Promise.all(snapshot.docs.map(async (doc, index) => {
