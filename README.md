@@ -1,54 +1,124 @@
-# React + TypeScript + Vite
+# Mi OpenLab
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Mi OpenLab es una plataforma web moderna para la gestión y colaboración en comunidades de innovación y desarrollo.
 
-Currently, two official plugins are available:
+## 🚀 Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Sistema de autenticación completo
+- Gestión de comunidades
+- Perfiles de usuario personalizables
+- Sistema de rankings
+- Panel de administración
+- Exploración de proyectos y comunidades
 
-## Expanding the ESLint configuration
+## 🛠️ Tecnologías Utilizadas
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React + TypeScript
+- Vite
+- Tailwind CSS
+- Firebase (Authentication, Firestore, Storage)
+- React Router
+- Context API para gestión de estado
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 📋 Prerrequisitos
+
+- Node.js (versión 18 o superior)
+- npm o yarn
+- Cuenta de Firebase
+
+## 🔧 Instalación
+
+1. Clona el repositorio:
+```bash
+git clone [URL_DEL_REPOSITORIO]
+cd mi-openlab
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+2. Instala las dependencias:
+```bash
+npm install
 ```
+
+3. Configura las variables de entorno:
+Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
+```
+VITE_FIREBASE_API_KEY=tu_api_key
+VITE_FIREBASE_AUTH_DOMAIN=tu_auth_domain
+VITE_FIREBASE_PROJECT_ID=tu_project_id
+VITE_FIREBASE_STORAGE_BUCKET=tu_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=tu_messaging_sender_id
+VITE_FIREBASE_APP_ID=tu_app_id
+```
+
+4. Inicia el servidor de desarrollo:
+```bash
+npm run dev
+```
+
+## 🏗️ Estructura del Proyecto
+
+```
+mi-openlab/
+├── src/
+│   ├── components/     # Componentes reutilizables
+│   ├── pages/         # Vistas principales
+│   ├── context/       # Contextos de React
+│   ├── hooks/         # Custom hooks
+│   ├── services/      # Servicios y APIs
+│   ├── utils/         # Utilidades
+│   ├── types/         # Definiciones de TypeScript
+│   └── assets/        # Recursos estáticos
+```
+
+## 📱 Vistas Principales
+
+### 🏠 Home
+![Imagen de la vista Home](./mi-openlab/src/assets/Readme/Inicio.PNG)
+
+La página principal muestra un resumen de las comunidades más activas y proyectos destacados.
+
+### 👥 Comunidades
+![Imagen de la vista Comunidades](./mi-openlab/src/assets/Readme/Comunidades.PNG)
+
+Explora y únete a diferentes comunidades de innovación. Crea nuevas comunidades y gestiona las existentes.
+
+### 🔍 Explorar
+![Imagen de la vista Explorar](./mi-openlab/src/assets/Readme/Explorar.PNG)
+
+Descubre nuevos proyectos, comunidades y usuarios en la plataforma.
+
+### 🏆 Ranking
+![Imagen de la vista Ranking](./mi-openlab/src/assets/Readme/Ranking.PNG)
+
+Visualiza los rankings de usuarios y comunidades más activas.
+
+### 👤 Perfil de Usuario
+![Imagen de la vista Perfil](./mi-openlab/src/assets/Readme/Perfil.PNG)
+![Imagen de estadisticas](./mi-openlab/src/assets/Readme/Estadisticas.PNG)
+
+Gestiona tu perfil, proyectos y participación en comunidades.
+
+### 🔐 Autenticación
+![Imagen de la vista Login/Register](./mi-openlab/src/assets/Readme/LogIn.PNG)
+
+Sistema completo de autenticación con registro, inicio de sesión y recuperación de contraseña.
+
+
+Herramientas de administración para gestionar usuarios, comunidades y contenido.
+
+## 🔒 Seguridad
+
+El proyecto implementa reglas de seguridad en Firestore y Storage para proteger los datos de los usuarios.
+
+## 🤝 Contribución
+
+1. Haz un Fork del proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+
+## 📞 Contacto
+
+[Información de contacto del equipo]
