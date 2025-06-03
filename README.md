@@ -13,12 +13,13 @@ Mi OpenLab es una plataforma web moderna para la gestión y colaboración en com
 
 ## 🛠️ Tecnologías Utilizadas
 
-- React + TypeScript
-- Vite
-- Tailwind CSS
-- Firebase (Authentication, Firestore, Storage)
-- React Router
+- <img src="https://cdn.simpleicons.org/react" width="16"/> React + TypeScript <img src="https://cdn.simpleicons.org/typescript" width="16"/>
+- <img src="https://cdn.simpleicons.org/vite" width="16"/> Vite
+- <img src="https://cdn.simpleicons.org/tailwindcss" width="16"/> Tailwind CSS
+- <img src="https://cdn.simpleicons.org/firebase" width="16"/> Firebase (Authentication, Firestore, Storage)
+- <img src="https://cdn.simpleicons.org/reactrouter" width="16"/> React Router
 - Context API para gestión de estado
+
 
 ## 📋 Prerrequisitos
 
