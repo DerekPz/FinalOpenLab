@@ -391,7 +391,7 @@ export default function MyProfileView() {
             <select
               value={newTech.level}
               onChange={e => setNewTech(prev => ({ ...prev, level: e.target.value as TechStack['level'] }))}
-              className="bg-transparent border rounded-lg px-3 py-2 focus:outline-none focus:border-primary dark:border-zinc-600"
+              className="bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm"
             >
               <option value="Básico">Básico</option>
               <option value="Intermedio">Intermedio</option>
