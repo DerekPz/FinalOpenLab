@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import { uploadImage } from '../services/upload';
 import { db } from '../services/firebase';
 import { logUserActivity } from '../services/userActivity';
+import { updateReputation } from '../services/reputation'; // Asegúrate de que la ruta sea correcta
+
 
 import BaseModal from './BaseModal'; // Importa el BaseModal
 
@@ -61,6 +63,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         likes: 0,
         likedBy: [],
       });
+      await updateReputation(user.uid, 'project_published', docRef.id);
       // Limpiar estados y formulario al éxito
       reset();
       setPreviewUrl('');
