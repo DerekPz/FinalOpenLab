@@ -7,6 +7,8 @@ import { Linkedin, Github, Globe, Plus, X, Upload } from 'lucide-react';
 import FollowersModal from '../../components/FollowersModal';
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import defaultIcon from '../../assets/default.png';
+
 
 // Mapeo de nombres de tecnologías a sus identificadores en Simple Icons
 const techLogoMapping: { [key: string]: string } = {
@@ -24,7 +26,7 @@ const techLogoMapping: { [key: string]: string } = {
   'sass': 'sass',
   'next.js': 'nextdotjs',
   'nextjs': 'nextdotjs',
-  
+
   // Backend
   'node': 'nodedotjs',
   'nodejs': 'nodedotjs',
@@ -35,13 +37,13 @@ const techLogoMapping: { [key: string]: string } = {
   'spring': 'spring',
   'ruby': 'ruby',
   'rails': 'rubyonrails',
-  
+
   // Bases de datos
   'mongodb': 'mongodb',
   'mysql': 'mysql',
   'postgresql': 'postgresql',
   'firebase': 'firebase',
-  
+
   // Herramientas
   'git': 'git',
   'docker': 'docker',
@@ -59,18 +61,18 @@ const getLogoIdentifier = (techName: string): string => {
 // Función para formatear el tiempo de experiencia
 const formatExperience = (years: number, months: number = 0): string => {
   const totalMonths = (years * 12) + months;
-  
+
   if (totalMonths < 12) {
     return `${totalMonths} ${totalMonths === 1 ? 'mes' : 'meses'} de experiencia`;
   }
-  
+
   const remainingYears = Math.floor(totalMonths / 12);
   const remainingMonths = totalMonths % 12;
-  
+
   if (remainingMonths === 0) {
     return `${remainingYears} ${remainingYears === 1 ? 'año' : 'años'} de experiencia`;
   }
-  
+
   return `${remainingYears} ${remainingYears === 1 ? 'año' : 'años'} y ${remainingMonths} ${remainingMonths === 1 ? 'mes' : 'meses'} de experiencia`;
 };
 
@@ -92,20 +94,20 @@ export default function MyProfileView() {
   useEffect(() => {
     async function loadProfile() {
       console.log('Loading profile, user:', user); // Debug log
-      
+
       if (!user?.uid) {
         console.log('No user UID found'); // Debug log
         return;
       }
-      
+
       try {
         setIsLoading(true);
         setError(null);
         console.log('Fetching profile for UID:', user.uid); // Debug log
         const userProfile = await getUserProfile(user.uid);
-        
+
         console.log('Profile data:', userProfile); // Debug log
-        
+
         if (!userProfile) {
           console.log('No profile found for user'); // Debug log
           setError('No se encontró el perfil. Por favor, contacta a soporte.');
@@ -131,7 +133,7 @@ export default function MyProfileView() {
           userProfile.followingCount = followingCount;
           userProfile.followersCount = followersCount;
         }
-        
+
         setProfile(userProfile);
       } catch (error) {
         console.error('Detailed error loading profile:', error); // Enhanced error logging
@@ -140,7 +142,7 @@ export default function MyProfileView() {
         setIsLoading(false);
       }
     }
-    
+
     loadProfile();
   }, [user]);
 
@@ -247,7 +249,7 @@ export default function MyProfileView() {
 
                 {/* Estadísticas de seguidores */}
                 <div className="flex items-center gap-6 mt-4">
-                  <button 
+                  <button
                     onClick={() => setShowFollowersModal(true)}
                     className="text-center hover:bg-zinc-100 dark:hover:bg-zinc-700/50 px-3 py-1 rounded-lg transition"
                   >
@@ -259,7 +261,7 @@ export default function MyProfileView() {
                     </div>
                   </button>
 
-                  <button 
+                  <button
                     onClick={() => setShowFollowingModal(true)}
                     className="text-center hover:bg-zinc-100 dark:hover:bg-zinc-700/50 px-3 py-1 rounded-lg transition"
                   >
@@ -335,7 +337,7 @@ export default function MyProfileView() {
       {/* Stack tecnológico */}
       <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700/50">
         <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-4 ">Stack Tecnológico</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
           {profile.techStack?.map(tech => (
             <div
@@ -350,13 +352,11 @@ export default function MyProfileView() {
                     className="w-6 h-6"
                     onError={(e) => {
                       const target = e.currentTarget;
-                      const techName = tech.name.toLowerCase();
-                      if (target.src.includes(tech.name)) {
-                        target.src = `https://cdn.simpleicons.org/${techName}`;
-                      } else {
-                        target.src = 'https://cdn.simpleicons.org/code/808080';
-                      }
-                    }}
+                      // Usa solo la imagen local directamente al fallar
+                      target.onerror = null; // evita bucle infinito
+                      target.src = defaultIcon;
+                    }
+                    }
                   />
                 </div>
                 <div>
@@ -438,7 +438,7 @@ export default function MyProfileView() {
       {isEditing && (
         <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border-zinc-200 dark:border-zinc-700/50">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-4 ">Enlaces Profesionales</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -452,7 +452,7 @@ export default function MyProfileView() {
                 className="w-full bg-transparent border rounded-lg px-3 py-2 focus:outline-none focus:border-primary dark:border-zinc-600"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 GitHub URL
@@ -465,7 +465,7 @@ export default function MyProfileView() {
                 className="w-full bg-transparent border rounded-lg px-3 py-2 focus:outline-none focus:border-primary dark:border-zinc-600"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Sitio Web Personal
